@@ -220,21 +220,20 @@
           </div>
 
           <div class="note" style="margin-top:10px">
-            <b>Contacts-accurate formula:</b><br>
-            • Ground drills (Yards/Meters): contacts = <b>reps × jumps</b><br>
-            • Stadium stairs: contacts = <b>steps × columns × jumps</b><br>
-            • Stadium stairs (alternating leg): contacts = <b>(right leg + left leg) × steps × columns</b><br>
+            <b>How it works:</b><br>
+            • Click <b>"+ Add Exercise"</b> to add each exercise<br>
+            • Enter exercise name (e.g., "Broad Jump", "Single Leg Stair Jump")<br>
+            • Choose <b>Bilateral</b> (both legs) or <b>Unilateral</b> (single leg)<br>
+            • Enter number of sets and reps per set<br>
+            • For unilateral: enter R Leg and L Leg reps separately<br>
+            <br>
+            <b>Examples:</b><br>
+            • Broad Jump: Bilateral, 4 sets, 34 reps per set<br>
+            • Single Leg Stair Jump: Unilateral, 4 sets, R Leg: 21, L Leg: 21<br>
             <br>
             <b>RPE (Rate of Perceived Exertion):</b><br>
             • 1-3: Easy/Warmup | 4-6: Moderate | 7-8: Hard | 9-10: Max Effort<br>
-            • Higher RPE = Higher CNS load & TSS (affects recovery needs)<br>
-            <br>
-            <b>Time Tracking & Velocity:</b><br>
-            • Format: MM:SS (e.g., 00:05 for 5 seconds)<br>
-            • Auto-calculates velocity (distance/time) for progression tracking<br>
-            • Compare times week-to-week to monitor speed improvements<br>
-            <br>
-            • Each row = complete exercise with its own type & unit
+            • Higher RPE = Higher CNS load & TSS (affects recovery needs)
           </div>
           <div class="grid2">
             <div>
@@ -251,50 +250,14 @@
           </div>
 
           <div class="sec" style="margin-top:10px">
-            <div class="hd">📈 Progression Tracking</div>
-            <div class="bd">
-              <div id="progressionData" class="muted sm" style="padding:8px">
-                After saving, this will show velocity trends and RPE patterns for your exercises. Track improvements week-to-week!
-              </div>
-            </div>
-          </div>
-
-          <div class="sec" style="margin-top:10px">
-            <div class="hd">Exercises (click "+ Add Exercise" for each drill)</div>
+            <div class="hd">Exercises</div>
             <div class="bd">
               <div class="row">
-                <button class="btn" onclick="addTrackRow()">+ Add Exercise</button>
-                <div class="muted sm">Each row = complete exercise. "5x10" works in Reps field.</div>
+                <button class="btn" onclick="addTrackExercise()">+ Add Exercise</button>
+                <div class="muted sm">Add each exercise with sets and reps.</div>
               </div>
-              <div style="overflow-x:auto;margin-top:8px">
-              <table style="font-size:12px;min-width:100%;width:max-content">
-                <thead>
-                  <tr>
-                    <th style="width:30px">#</th>
-                    <th style="width:140px">Exercise</th>
-                    <th style="width:70px">Unit</th>
-                    <th style="width:60px">Dist</th>
-                    <th style="width:60px">Reps</th>
-                    <th style="width:60px">Jumps</th>
-                    <th style="width:60px">Steps</th>
-                    <th style="width:60px">Cols</th>
-                    <th style="width:60px">Time</th>
-                    <th style="width:50px">RPE</th>
-                    <th style="width:70px">R/L</th>
-                    <th style="width:70px" class="right">Cont.</th>
-                    <th style="width:80px">Notes</th>
-                    <th style="width:40px"></th>
-                  </tr>
-                </thead>
-                <tbody id="trkRows"></tbody>
-                <tfoot>
-                  <tr>
-                    <th colspan="11" class="right">Total Contacts</th>
-                    <th class="right" id="trkContactsTotal">0</th>
-                    <th colspan="2"></th>
-                  </tr>
-                </tfoot>
-              </table>
+              <div id="trackExercises" style="margin-top:10px">
+                <!-- Exercises will be added here -->
               </div>
             </div>
           </div>
@@ -707,18 +670,12 @@
   }
 
   function resetTrack(){
-    ['trkSleep'].forEach(id=>document.getElementById(id).value=''); trkAch.value='';
+    trkSleep.value=''; trkAch.value='';
     document.getElementById('trkPrev').innerHTML='No image';
-    document.getElementById('trkRows').innerHTML='';
-    
-    // Clear warmup checklist
+    document.getElementById('trackExercises').innerHTML='';
     document.querySelectorAll('.warmupCheck').forEach(cb => cb.checked = false);
     updateWarmupProgress();
-    
-    addTrackRow(); addTrackRow();
-    updateTrackTotals();
     ['trkAvgHR','trkPeakHR','trkZ5','trkZ4'].forEach(id=>document.getElementById(id).value='');
-    displayProgression();
   }
   
   function updateWarmupProgress(){
@@ -736,12 +693,12 @@
       }
     }
   }
+  
   function hydrateTrack(d){
     resetTrack();
     if(!d) return;
     trkSleep.value=d.sleep||''; trkAch.value=d.ach||'';
     
-    // Restore warmup checklist
     if(d.warmupChecks) {
       const checks = document.querySelectorAll('.warmupCheck');
       d.warmupChecks.forEach((checked, idx) => {
@@ -750,261 +707,148 @@
       updateWarmupProgress();
     }
     
-    const tb=document.getElementById('trkRows'); tb.innerHTML='';
-    (d.reps||[]).forEach(r=>addTrackRow(r));
-    updateTrackTotals();
-    trkAvgHR.value=d.hr?.avg||''; trkPeakHR.value=d.hr?.peak||''; trkZ5.value=d.hr?.z5||''; trkZ4.value=d.hr?.z4||'';
-    displayProgression();
+    if(d.hr){
+      trkAvgHR.value=d.hr.avg||''; trkPeakHR.value=d.hr.peak||''; 
+      trkZ5.value=d.hr.z5||''; trkZ4.value=d.hr.z4||'';
+    }
+    
+    (d.exercises||[]).forEach(ex => addTrackExercise(ex));
   }
   
-  function displayProgression(){
-    const progDiv = document.getElementById('progressionData');
-    if(!progDiv) return;
+  function addTrackExercise(data={}){
+    const container = document.getElementById('trackExercises');
+    const exerciseNum = container.children.length + 1;
     
-    // Find past track/plyo sessions with time+RPE data
-    const pastSessions = [];
-    Object.keys(store).sort().reverse().slice(0, 30).forEach(key => {
-      const day = store[key];
-      if(day?.modalities?.track?.reps) {
-        day.modalities.track.reps.forEach(rep => {
-          if(rep.time && rep.velocity && rep.rpe) {
-            pastSessions.push({
-              date: key,
-              exercise: rep.exercise,
-              dist: rep.dist,
-              unit: rep.unit,
-              time: rep.time,
-              velocity: rep.velocity,
-              rpe: rep.rpe,
-              contacts: rep.contacts
-            });
-          }
-        });
-      }
-    });
+    const exerciseDiv = document.createElement('div');
+    exerciseDiv.className = 'sec';
+    exerciseDiv.style.cssText = 'margin-top:10px;background:#0d1714;border:1px solid #1e6a4f;position:relative';
     
-    if(pastSessions.length === 0) {
-      progDiv.innerHTML = '<span class="muted">No progression data yet. Fill in Time and RPE fields to start tracking!</span>';
-      return;
-    }
-    
-    // Group by exercise type
-    const byExercise = {};
-    pastSessions.forEach(s => {
-      const key = `${s.exercise}-${s.dist}${s.unit}`;
-      if(!byExercise[key]) byExercise[key] = [];
-      byExercise[key].push(s);
-    });
-    
-    let html = '<table class="sm" style="width:100%"><thead><tr><th>Exercise</th><th>Last 3 Sessions</th><th>Trend</th></tr></thead><tbody>';
-    
-    Object.keys(byExercise).slice(0, 5).forEach(key => {
-      const sessions = byExercise[key].slice(0, 3);
-      const first = sessions[0];
-      html += `<tr><td><b>${first.exercise}</b><br>${first.dist} ${first.unit}</td><td>`;
-      
-      sessions.forEach(s => {
-        html += `<div>${s.date}: ${s.time} (${s.velocity} ${s.unit}/s) RPE ${s.rpe}</div>`;
-      });
-      
-      html += '</td><td>';
-      
-      if(sessions.length >= 2) {
-        const newest = parseFloat(sessions[0].velocity);
-        const oldest = parseFloat(sessions[sessions.length-1].velocity);
-        const change = ((newest - oldest) / oldest * 100).toFixed(1);
-        if(change > 0) {
-          html += `<span class="green">↑ ${change}% faster</span>`;
-        } else if(change < 0) {
-          html += `<span class="danger">↓ ${Math.abs(change)}% slower</span>`;
-        } else {
-          html += '<span class="muted">No change</span>';
-        }
-      } else {
-        html += '<span class="muted">Need more data</span>';
-      }
-      
-      html += '</td></tr>';
-    });
-    
-    html += '</tbody></table>';
-    progDiv.innerHTML = html;
-  }
-  function addTrackRow(p={}){
-    const tb=document.getElementById('trkRows');
-    const i=tb.children.length+1;
-    const isAltLeg = p.exercise==='Stadium Stairs - Alternating Leg';
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${i}</td>
-      <td>
-        <select class="tExercise" onchange="toggleAltLegFields(this)">
-          <option ${(p.exercise==='Broad Jump'||!p.exercise)?'selected':''}>Broad Jump</option>
-          <option ${p.exercise==='Triple Jump'?'selected':''}>Triple Jump</option>
-          <option ${p.exercise==='Single-Leg Bound'?'selected':''}>Single-Leg Bound</option>
-          <option ${p.exercise==='Box Jump'?'selected':''}>Box Jump</option>
-          <option ${p.exercise==='Depth Jump'?'selected':''}>Depth Jump</option>
-          <option ${p.exercise==='Hurdle Hop'?'selected':''}>Hurdle Hop</option>
-          <option ${p.exercise==='Bounding'?'selected':''}>Bounding</option>
-          <option ${p.exercise==='Stadium Stairs - Double Leg'?'selected':''}>Stadium Stairs - Double Leg</option>
-          <option ${p.exercise==='Stadium Stairs - Broad Jump'?'selected':''}>Stadium Stairs - Broad Jump</option>
-          <option ${p.exercise==='Stadium Stairs - Single Step'?'selected':''}>Stadium Stairs - Single Step</option>
-          <option ${p.exercise==='Stadium Stairs - Multiple Step'?'selected':''}>Stadium Stairs - Multiple Step</option>
-          <option ${p.exercise==='Stadium Stairs - Lateral Jump'?'selected':''}>Stadium Stairs - Lateral Jump</option>
-          <option ${p.exercise==='Stadium Stairs - Single Leg Hop'?'selected':''}>Stadium Stairs - Single Leg Hop</option>
-          <option ${p.exercise==='Stadium Stairs - Alternating Leg'?'selected':''}>Stadium Stairs - Alternating Leg</option>
-          <option ${p.exercise==='Stadium Stairs - Running Each Step'?'selected':''}>Stadium Stairs - Running Each Step</option>
-          <option ${p.exercise==='Stadium Stairs - Running Skip Steps'?'selected':''}>Stadium Stairs - Running Skip Steps</option>
-          <option ${p.exercise==='Sprint'?'selected':''}>Sprint</option>
-          <option ${p.exercise==='Hill Sprint'?'selected':''}>Hill Sprint</option>
-          <option ${p.exercise==='Sled Push'?'selected':''}>Sled Push</option>
-          <option ${p.exercise==='Other'?'selected':''}>Other</option>
-        </select>
-      </td>
-      <td>
-        <select class="tUnit" onchange="updateTrackTotals()">
-          <option ${(p.unit==='Yards'||!p.unit)?'selected':''}>Yards</option>
-          <option ${p.unit==='Meters'?'selected':''}>Meters</option>
-          <option ${p.unit==='Stairs'?'selected':''}>Stairs</option>
-        </select>
-      </td>
-      <td><input class="tDist" type="number" step="0.1" value="${p.dist||''}" placeholder="e.g., 40"></td>
-      <td><input class="tReps" value="${p.repsRaw||''}" placeholder="e.g., 5x10 or 50"></td>
-      <td><input class="tJumps" type="number" value="${p.jumps||p.jpr||''}" placeholder="jumps" ${isAltLeg?'style="display:none"':''} title="Ground: jumps/rep, Stairs: jumps/step"></td>
-      <td><input class="tSteps" type="number" value="${p.stepsPerCol||''}" placeholder="steps/col"></td>
-      <td><input class="tCols" type="number" value="${p.columns||''}" placeholder="columns"></td>
-      <td><input class="tTime" type="text" value="${p.time||''}" placeholder="MM:SS" title="Time to complete (minutes:seconds)"></td>
-      <td><input class="tRPE" type="number" step="0.5" min="1" max="10" value="${p.rpe||''}" placeholder="1-10" title="Rate of Perceived Exertion (1-10)"></td>
-      <td class="altLegCell" ${isAltLeg?'':'style="display:none"'}>
-        <div style="display:flex;gap:2px">
-          <input class="tRightLeg" type="number" value="${p.rightLeg||''}" placeholder="R" title="Right Leg" oninput="updateTrackTotals()">
-          <input class="tLeftLeg" type="number" value="${p.leftLeg||''}" placeholder="L" title="Left Leg" oninput="updateTrackTotals()">
+    exerciseDiv.innerHTML = `
+      <button class="btn" onclick="this.closest('.sec').remove()" style="position:absolute;top:8px;right:8px;padding:4px 8px;font-size:11px">🗑 Remove</button>
+      <div class="hd" style="background:#0f1b17;border-bottom:1px solid #1e6a4f;color:#9de8c5">
+        Exercise #${exerciseNum}
+      </div>
+      <div class="bd">
+        <div class="grid2">
+          <div style="grid-column:span 2">
+            <label>Exercise Name</label>
+            <input class="exName" type="text" value="${data.name||''}" placeholder="e.g., Broad Jump, Single Leg Stair Jump">
+          </div>
+          <div>
+            <label>Type</label>
+            <select class="exType" onchange="toggleExerciseFields(this)">
+              <option value="bilateral" ${(!data.type || data.type==='bilateral')?'selected':''}>Bilateral (both legs)</option>
+              <option value="unilateral" ${data.type==='unilateral'?'selected':''}>Unilateral (single leg)</option>
+            </select>
+          </div>
+          <div>
+            <label>Sets</label>
+            <input class="exSets" type="number" min="1" value="${data.sets||''}" placeholder="e.g., 4">
+          </div>
+          <div class="bilateralFields" ${data.type==='unilateral'?'style="display:none"':''}>
+            <label>Reps per set</label>
+            <input class="exReps" type="number" min="1" value="${data.reps||''}" placeholder="e.g., 34">
+          </div>
+          <div class="unilateralFields" ${data.type==='unilateral'?'':'style="display:none"'}>
+            <label>R Leg reps per set</label>
+            <input class="exRepsRight" type="number" min="1" value="${data.repsRight||''}" placeholder="e.g., 21">
+          </div>
+          <div class="unilateralFields" ${data.type==='unilateral'?'':'style="display:none"'}>
+            <label>L Leg reps per set</label>
+            <input class="exRepsLeft" type="number" min="1" value="${data.repsLeft||''}" placeholder="e.g., 21">
+          </div>
+          <div>
+            <label>RPE (1-10)</label>
+            <input class="exRPE" type="number" step="0.5" min="1" max="10" value="${data.rpe||''}" placeholder="8">
+          </div>
+          <div>
+            <label>Time (MM:SS)</label>
+            <input class="exTime" type="text" value="${data.time||''}" placeholder="00:30">
+          </div>
+          <div style="grid-column:span 2">
+            <label>Notes</label>
+            <input class="exNotes" type="text" value="${data.notes||''}" placeholder="Optional notes">
+          </div>
         </div>
-      </td>
-      <td class="right tContacts">0</td>
-      <td><input class="tNote" value="${p.note||''}"></td>
-      <td><button class="btn" onclick="this.closest('tr').remove();reindexTrack();updateTrackTotals()" style="padding:4px 6px">🗑</button></td>`;
-    tb.appendChild(tr);
-    [...tr.querySelectorAll('input')].forEach(inp=>inp.addEventListener('input',updateTrackTotals));
-    updateTrackTotals();
-  }
-  function reindexTrack(){
-    const tb=document.getElementById('trkRows');
-    [...tb.children].forEach((tr,idx)=>tr.children[0].textContent=idx+1);
-  }
-  function toggleAltLegFields(selectEl){
-    const tr = selectEl.closest('tr');
-    const isAltLeg = selectEl.value === 'Stadium Stairs - Alternating Leg';
-    const isStadiumStairs = selectEl.value.includes('Stadium Stairs');
-    const jumpsInput = tr.querySelector('.tJumps');
-    const altLegCell = tr.querySelector('.altLegCell');
-    const unitSelect = tr.querySelector('.tUnit');
+      </div>
+    `;
     
-    // Auto-select Stairs unit for any Stadium Stairs exercise
-    if(isStadiumStairs){
-      unitSelect.value = 'Stairs';
-    }
+    container.appendChild(exerciseDiv);
+  }
+  
+  function toggleExerciseFields(selectEl){
+    const parent = selectEl.closest('.sec');
+    const type = selectEl.value;
     
-    if(isAltLeg){
-      jumpsInput.style.display = 'none';
-      jumpsInput.value = '';
-      altLegCell.style.display = 'table-cell';
+    const bilateralFields = parent.querySelectorAll('.bilateralFields');
+    const unilateralFields = parent.querySelectorAll('.unilateralFields');
+    
+    if(type === 'bilateral') {
+      bilateralFields.forEach(f => f.style.display = 'block');
+      unilateralFields.forEach(f => f.style.display = 'none');
     } else {
-      jumpsInput.style.display = 'block';
-      altLegCell.style.display = 'none';
-      tr.querySelector('.tRightLeg').value = '';
-      tr.querySelector('.tLeftLeg').value = '';
+      bilateralFields.forEach(f => f.style.display = 'none');
+      unilateralFields.forEach(f => f.style.display = 'block');
     }
-    updateTrackTotals();
   }
-  function updateTrackTotals(){
-    let totalContacts=0;
-    document.querySelectorAll('#trkRows tr').forEach(tr=>{
-      const exercise=tr.querySelector('.tExercise').value;
-      const unit=tr.querySelector('.tUnit').value;
-      const reps=parseSets(tr.querySelector('.tReps').value);
-      const jumps=fmt(tr.querySelector('.tJumps').value)||1;
-      const steps=fmt(tr.querySelector('.tSteps').value);
-      const cols=fmt(tr.querySelector('.tCols').value);
-      const rightLeg=fmt(tr.querySelector('.tRightLeg')?.value)||0;
-      const leftLeg=fmt(tr.querySelector('.tLeftLeg')?.value)||0;
-      
-      let contacts=0;
-      
-      if(exercise === 'Stadium Stairs - Alternating Leg'){
-        // Alternating leg: (right + left) × steps × columns
-        contacts = (rightLeg + leftLeg) * steps * cols;
-      } else if(unit==='Stairs' || exercise.includes('Stadium Stairs')){
-        // Stadium stairs: steps × columns × jumps
-        contacts = steps * cols * jumps;
-      } else {
-        // Ground drills: reps × jumps
-        contacts = reps * jumps;
-      }
-      
-      tr.querySelector('.tContacts').textContent=contacts;
-      totalContacts += contacts;
-    });
-    document.getElementById('trkContactsTotal').textContent=totalContacts;
-  }
+  
   function collectTrack(){
     if(!document.getElementById('mTrack').checked) return null;
     
-    // Collect warmup checklist
     const warmupChecks = [...document.querySelectorAll('.warmupCheck')].map(cb => cb.checked);
     
-    const repsRows=[...document.querySelectorAll('#trkRows tr')].map(tr=>{
-      const time = tr.querySelector('.tTime').value;
-      const dist = fmt(tr.querySelector('.tDist').value);
-      const rpe = fmt(tr.querySelector('.tRPE').value);
+    const exercises = [...document.querySelectorAll('#trackExercises .sec')].map(exDiv => {
+      const name = exDiv.querySelector('.exName').value;
+      const type = exDiv.querySelector('.exType').value;
+      const sets = fmt(exDiv.querySelector('.exSets').value);
+      const rpe = fmt(exDiv.querySelector('.exRPE').value);
+      const time = exDiv.querySelector('.exTime').value;
+      const notes = exDiv.querySelector('.exNotes').value;
       
-      // Calculate velocity if time and distance are provided
-      let velocity = null;
-      if(time && dist) {
-        const timeMatch = time.match(/^(\d+):(\d+)$/);
-        if(timeMatch) {
-          const totalSeconds = parseInt(timeMatch[1]) * 60 + parseInt(timeMatch[2]);
-          if(totalSeconds > 0) {
-            velocity = (dist / totalSeconds).toFixed(2); // distance per second
-          }
-        }
+      let totalReps = 0;
+      const ex = { name, type, sets, rpe, time, notes };
+      
+      if(type === 'bilateral') {
+        const reps = fmt(exDiv.querySelector('.exReps').value);
+        ex.reps = reps;
+        totalReps = sets * reps;
+      } else {
+        const repsRight = fmt(exDiv.querySelector('.exRepsRight').value);
+        const repsLeft = fmt(exDiv.querySelector('.exRepsLeft').value);
+        ex.repsRight = repsRight;
+        ex.repsLeft = repsLeft;
+        totalReps = sets * (repsRight + repsLeft);
       }
       
-      const obj={
-        exercise:tr.querySelector('.tExercise').value,
-        unit:tr.querySelector('.tUnit').value,
-        dist,
-        repsRaw:tr.querySelector('.tReps').value,
-        reps:parseSets(tr.querySelector('.tReps').value),
-        jumps:fmt(tr.querySelector('.tJumps').value)||1,
-        stepsPerCol:fmt(tr.querySelector('.tSteps').value),
-        columns:fmt(tr.querySelector('.tCols').value),
-        time,
-        rpe,
-        velocity,
-        rightLeg:fmt(tr.querySelector('.tRightLeg')?.value)||0,
-        leftLeg:fmt(tr.querySelector('.tLeftLeg')?.value)||0,
-        contacts:fmt(tr.querySelector('.tContacts').textContent),
-        note:tr.querySelector('.tNote').value||''
-      };
-      return obj;
-    }).filter(r=> r.contacts>0);
-    if(!repsRows.length) return null;
-    const totalContacts = repsRows.reduce((s,r)=>s+r.contacts,0);
-    const hasStairs = repsRows.some(r=>r.unit==='Stairs' || r.exercise.includes('Stadium Stairs'));
+      ex.totalReps = totalReps;
+      return ex;
+    }).filter(ex => ex.name && ex.sets > 0);
     
-    // Factor RPE into CNS calculation
-    const avgRPE = repsRows.filter(r=>r.rpe>0).reduce((s,r)=>s+r.rpe,0) / repsRows.filter(r=>r.rpe>0).length || 0;
+    if(!exercises.length) return null;
+    
+    const totalContacts = exercises.reduce((sum, ex) => sum + ex.totalReps, 0);
+    const avgRPE = exercises.filter(ex=>ex.rpe>0).reduce((s,ex)=>s+ex.rpe,0) / exercises.filter(ex=>ex.rpe>0).length || 0;
+    
     let cns=35 + (fmt(trkSleep.value)<7?12:0) + (trkAch.value==='Sore'?25:trkAch.value==='Tight'?12:0);
     if(totalContacts>350) cns+=15;
     if(avgRPE>=9) cns+=20;
     else if(avgRPE>=8) cns+=12;
     else if(avgRPE>=7) cns+=8;
     
-    const tss = Math.round(60 + totalContacts*0.12 + (hasStairs?10:0) + (avgRPE*5));
+    const tss = Math.round(60 + totalContacts*0.12 + (avgRPE*5));
     const hr={avg:fmt(trkAvgHR.value),peak:fmt(trkPeakHR.value),z5:fmt(trkZ5.value),z4:fmt(trkZ4.value)};
-    return {sleep:fmt(trkSleep.value), ach:trkAch.value, warmupChecks, reps:repsRows,
-      contacts:totalContacts, avgRPE, cnsScore:clamp(cns,0,100), tss, hr};
+    
+    return {
+      sleep:fmt(trkSleep.value), 
+      ach:trkAch.value, 
+      warmupChecks, 
+      exercises,
+      contacts:totalContacts, 
+      avgRPE, 
+      cnsScore:clamp(cns,0,100), 
+      tss, 
+      hr
+    };
   }
 
   const bikeProto=document.getElementById('bikeProto');
