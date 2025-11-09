@@ -124,12 +124,25 @@
         <div><label>Training Age (years)</label><input id="pfTA" type="number" step="0.1"></div>
         <div><label>Resting HR (bpm)</label><input id="pfRHR" type="number"></div>
         <div><label>Max HR (bpm) <span class="muted sm">auto-calculates</span></label><input id="pfMHR" type="number" placeholder="auto from age"></div>
-        <div><label>Sport / Focus</label><input id="pfSport" placeholder="MMA, BJJ, S&C etc."></div>
+        <div><label>Sport / Focus</label>
+          <select id="pfSport">
+            <option value="">Choose...</option>
+            <option value="Hybrid">Hybrid (Strength + Power + Endurance + Hypertrophy)</option>
+            <option value="MMA">MMA / Fighting</option>
+            <option value="Strength">Strength & Powerlifting</option>
+            <option value="Endurance">Endurance / Cardio</option>
+            <option value="Hypertrophy">Hypertrophy / Bodybuilding</option>
+            <option value="BJJ">BJJ / Grappling</option>
+            <option value="General">General Fitness</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
         <div><label>Primary Goal</label><input id="pfGoal" placeholder="e.g., fight camp, strength, VO2"></div>
         <div><label>Weekly Availability (days)</label><input id="pfAvail" type="number" min="1" max="14"></div>
       </div>
       <div class="note" style="margin-top:10px">
         <b>Max HR Auto-Calculation:</b> Uses Tanaka formula (2001): <b>208 - (0.7 × age)</b> - the most accurate research-validated formula for adults. Leave Max HR blank for auto-calculation, or enter a value to override (e.g., from a VO2 max test).<br><br>
+        <b>Sport Focus Impact:</b> Your sport focus adjusts TSS/CNS calculations and provides weekly training recommendations. For example, "Hybrid" requires balanced work across Strength, Power, Endurance, Skill, and Recovery domains. Weekly Analysis will show which domains you've covered and what's missing.<br><br>
         Saves HR zones (5-zone model, %Max + Karvonen if RHR provided). Zones appear as chips under toolbar.
       </div>
       <div class="row" style="margin-top:10px;justify-content:flex-end">
@@ -1341,6 +1354,15 @@
     if(Object.keys(day.modalities).length===0){document.getElementById('saveNote').textContent='Select at least one modality.'; return}
     let CNS=0,VOL=0,TSS=0;
     Object.values(day.modalities).forEach(m=>{CNS+=fmt(m.cnsScore); VOL+=fmt(m.volume); TSS+=fmt(m.tss)});
+    
+    // Adjust TSS/CNS based on sport focus
+    const profile = LS.get('elite_profile', {});
+    const sportFocus = profile.sport || '';
+    const adjustments = getAdjustmentFactors(sportFocus, day.modalities);
+    
+    CNS = Math.round(CNS * adjustments.cnsMultiplier);
+    TSS = Math.round(TSS * adjustments.tssMultiplier);
+    
     day.totalCNS=CNS; day.totalVolume=VOL; day.tss=TSS;
     store[curKey]=day; LS.set('elite_days',store);
     hist.push({d:curKey,tss:TSS}); if(hist.length>28) hist.shift(); LS.set('elite_tss',hist);
@@ -1351,18 +1373,139 @@
 
   const weekModal=document.getElementById('weekModal');
   function closeWeek(){weekModal.classList.remove('show')}
+  
+  function getAdjustmentFactors(sportFocus, modalities) {
+    // Default: no adjustment
+    let cnsMultiplier = 1.0;
+    let tssMultiplier = 1.0;
+    
+    if(!sportFocus) return {cnsMultiplier, tssMultiplier};
+    
+    const hasStrength = modalities.chest || modalities.back || modalities.legs;
+    const hasPower = modalities.track;
+    const hasEndurance = modalities.bike;
+    const hasSkill = modalities.bjj;
+    
+    // Adjust based on sport focus preferences
+    switch(sportFocus) {
+      case 'Hybrid':
+        // Balanced - no adjustment needed
+        cnsMultiplier = 1.0;
+        tssMultiplier = 1.0;
+        break;
+        
+      case 'Strength':
+        // Higher tolerance for strength work, lower for cardio
+        if(hasStrength && !hasEndurance) {
+          cnsMultiplier = 0.90; // Less CNS stress from strength when it's your focus
+          tssMultiplier = 0.95;
+        }
+        if(hasEndurance && !hasStrength) {
+          cnsMultiplier = 1.10; // More taxing when not your focus
+          tssMultiplier = 1.10;
+        }
+        break;
+        
+      case 'Endurance':
+        // Higher tolerance for cardio, lower for heavy strength
+        if(hasEndurance && !hasStrength) {
+          cnsMultiplier = 0.90;
+          tssMultiplier = 0.95;
+        }
+        if(hasStrength && !hasEndurance) {
+          cnsMultiplier = 1.10;
+          tssMultiplier = 1.05;
+        }
+        break;
+        
+      case 'MMA':
+        // Balanced but skill-focused
+        if(hasSkill) {
+          cnsMultiplier = 0.95; // Skill work is core to focus
+        }
+        if(hasPower) {
+          cnsMultiplier = 0.95; // Power work is important
+        }
+        break;
+        
+      case 'BJJ':
+        // Skill and endurance focused
+        if(hasSkill) {
+          cnsMultiplier = 0.90;
+          tssMultiplier = 0.95;
+        }
+        if(hasEndurance) {
+          cnsMultiplier = 0.95;
+        }
+        break;
+        
+      case 'Hypertrophy':
+        // Volume tolerance, recovery important
+        if(hasStrength) {
+          cnsMultiplier = 0.95;
+          tssMultiplier = 1.0;
+        }
+        break;
+        
+      case 'General':
+        // Moderate adjustments for variety
+        cnsMultiplier = 0.98;
+        tssMultiplier = 0.98;
+        break;
+    }
+    
+    return {cnsMultiplier, tssMultiplier};
+  }
   document.getElementById('weeklyBtn').onclick=()=>{
     const end=new Date(); const start=new Date(); start.setDate(start.getDate()-6);
     let totalCNS=0,totalVOL=0,totalTSS=0,days=0; const dailyCNS=[];
+    
+    // Track which modalities were done this week
+    const modalitiesDone = {
+      chest: false,
+      back: false,
+      legs: false,
+      track: false,
+      bike: false,
+      bjj: false,
+      walk: false
+    };
+    
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
       const k=toKey(d); const day=store[k];
-      if(day){days++; totalCNS+=fmt(day.totalCNS); totalVOL+=fmt(day.totalVolume); totalTSS+=fmt(day.tss); dailyCNS.push(fmt(day.totalCNS));}
+      if(day){
+        days++; 
+        totalCNS+=fmt(day.totalCNS); 
+        totalVOL+=fmt(day.totalVolume); 
+        totalTSS+=fmt(day.tss); 
+        dailyCNS.push(fmt(day.totalCNS));
+        
+        // Track modalities
+        if(day.modalities) {
+          if(day.modalities.chest) modalitiesDone.chest = true;
+          if(day.modalities.back) modalitiesDone.back = true;
+          if(day.modalities.legs) modalitiesDone.legs = true;
+          if(day.modalities.track) modalitiesDone.track = true;
+          if(day.modalities.bike) modalitiesDone.bike = true;
+          if(day.modalities.bjj) modalitiesDone.bjj = true;
+          if(day.modalities.walk) modalitiesDone.walk = true;
+        }
+      }
     }
+    
     const avgCNS=days?Math.round(totalCNS/days):0; const avgTSS=days?Math.round(totalTSS/days):0;
     const mean=avgCNS; const varc=dailyCNS.length? dailyCNS.reduce((s,v)=>s+Math.pow(v-mean,2),0)/dailyCNS.length : 0;
     const std=Math.sqrt(varc); const mono=std>0?(mean/std).toFixed(2):'0.00';
     const last28=hist.slice(-28); let ac='—', warn=false;
     if(last28.length>=14){const chronic=last28.reduce((a,b)=>a+fmt(b.tss),0)/last28.length; if(chronic>0){ac=(avgTSS*7/chronic).toFixed(2); warn=parseFloat(ac)>1.30}}
+    
+    // Get user's sport focus
+    const profile = LS.get('elite_profile', {});
+    const sportFocus = profile.sport || '';
+    
+    // Generate recommendations based on sport focus and modalities done
+    let recommendations = generateRecommendations(sportFocus, modalitiesDone);
+    
     document.getElementById('weekBody').innerHTML=`
       <div class="grid2">
         <div class="kpi"><div class="muted">Total Volume (lb)</div><div class="v">${totalVOL.toLocaleString()}</div></div>
@@ -1372,9 +1515,103 @@
         <div class="kpi"><div class="muted">Monotony</div><div class="v">${mono}</div></div>
       </div>
       ${warn?`<div class="sec" style="margin-top:12px"><div class="bd"><div class="danger"><b>Injury-risk warning:</b> reduce next-week volume 15–20%, add 1–2 rest days, emphasize sleep & nutrition.</div></div></div>`:''}
+      ${recommendations ? `<div class="sec" style="margin-top:12px"><div class="hd">📋 Training Balance ${sportFocus ? `(${sportFocus})` : ''}</div><div class="bd">${recommendations}</div></div>` : ''}
     `;
     weekModal.classList.add('show');
   };
+  
+  function generateRecommendations(sportFocus, modalitiesDone) {
+    if(!sportFocus) return '';
+    
+    let html = '';
+    const missing = [];
+    const complete = [];
+    
+    // Domain definitions
+    const domains = {
+      strength: {
+        name: 'Strength',
+        modalities: ['chest', 'back', 'legs'],
+        labels: {chest: 'Chest Day', back: 'Back Day', legs: 'Legs Day'}
+      },
+      power: {
+        name: 'Power',
+        modalities: ['track'],
+        labels: {track: 'Track/Plyo'}
+      },
+      endurance: {
+        name: 'Endurance',
+        modalities: ['bike'],
+        labels: {bike: 'Assault Bike'}
+      },
+      skill: {
+        name: 'Skill',
+        modalities: ['bjj'],
+        labels: {bjj: 'BJJ'}
+      },
+      recovery: {
+        name: 'Recovery',
+        modalities: ['walk'],
+        labels: {walk: 'Walk'}
+      }
+    };
+    
+    // Requirements by sport focus
+    const requirements = {
+      'Hybrid': ['strength', 'power', 'endurance', 'skill', 'recovery'],
+      'MMA': ['strength', 'power', 'endurance', 'skill'],
+      'Strength': ['strength', 'power'],
+      'Endurance': ['endurance', 'recovery'],
+      'Hypertrophy': ['strength', 'recovery'],
+      'BJJ': ['strength', 'skill', 'endurance'],
+      'General': ['strength', 'endurance', 'recovery']
+    };
+    
+    const required = requirements[sportFocus] || [];
+    
+    // Check each required domain
+    required.forEach(domainKey => {
+      const domain = domains[domainKey];
+      const missingInDomain = [];
+      let anyDone = false;
+      
+      domain.modalities.forEach(mod => {
+        if(modalitiesDone[mod]) {
+          anyDone = true;
+        } else {
+          missingInDomain.push(domain.labels[mod]);
+        }
+      });
+      
+      if(domainKey === 'strength') {
+        // Special case: strength needs all 3
+        if(modalitiesDone.chest && modalitiesDone.back && modalitiesDone.legs) {
+          complete.push(`<span style="color:#00ffb3">✓ ${domain.name} (complete)</span>`);
+        } else {
+          missing.push(`<span style="color:#ffbb33">⚠ ${domain.name}: Missing ${missingInDomain.join(', ')}</span>`);
+        }
+      } else {
+        if(anyDone) {
+          complete.push(`<span style="color:#00ffb3">✓ ${domain.name}</span>`);
+        } else {
+          missing.push(`<span style="color:#ff6b6b">✗ ${domain.name}: Add ${missingInDomain.join(', ')}</span>`);
+        }
+      }
+    });
+    
+    if(complete.length > 0) {
+      html += '<div style="margin-bottom:8px">' + complete.join(' • ') + '</div>';
+    }
+    
+    if(missing.length === 0) {
+      html += '<div style="color:#00ffb3;font-weight:600">🎯 Perfect balance - all domains covered!</div>';
+    } else {
+      html += '<div style="margin-top:8px"><b>Recommended for next week:</b></div>';
+      html += '<div style="margin-top:4px">' + missing.join('<br>') + '</div>';
+    }
+    
+    return html;
+  }
 
   renderZoneChips();
   renderCal();
