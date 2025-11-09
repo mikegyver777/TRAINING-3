@@ -123,12 +123,13 @@
         <div><label>Weight (lb)</label><input id="pfWt" type="number" step="0.1"></div>
         <div><label>Training Age (years)</label><input id="pfTA" type="number" step="0.1"></div>
         <div><label>Resting HR (bpm)</label><input id="pfRHR" type="number"></div>
-        <div><label>Max HR (override, bpm)</label><input id="pfMHR" type="number" placeholder="auto from age"></div>
+        <div><label>Max HR (bpm) <span class="muted sm">auto-calculates</span></label><input id="pfMHR" type="number" placeholder="auto from age"></div>
         <div><label>Sport / Focus</label><input id="pfSport" placeholder="MMA, BJJ, S&C etc."></div>
         <div><label>Primary Goal</label><input id="pfGoal" placeholder="e.g., fight camp, strength, VO2"></div>
         <div><label>Weekly Availability (days)</label><input id="pfAvail" type="number" min="1" max="14"></div>
       </div>
       <div class="note" style="margin-top:10px">
+        <b>Max HR Auto-Calculation:</b> Uses Tanaka formula (2001): <b>208 - (0.7 × age)</b> - the most accurate research-validated formula for adults. Leave Max HR blank for auto-calculation, or enter a value to override (e.g., from a VO2 max test).<br><br>
         Saves HR zones (5-zone model, %Max + Karvonen if RHR provided). Zones appear as chips under toolbar.
       </div>
       <div class="row" style="margin-top:10px;justify-content:flex-end">
@@ -535,10 +536,59 @@
   document.getElementById('todayBtn').onclick=()=>{cur=new Date();renderCal()}
 
   const profileModal=document.getElementById('profileModal');
+  const pfAge=document.getElementById('pfAge');
+  const pfSex=document.getElementById('pfSex');
+  const pfHt=document.getElementById('pfHt');
+  const pfWt=document.getElementById('pfWt');
+  const pfTA=document.getElementById('pfTA');
+  const pfRHR=document.getElementById('pfRHR');
+  const pfMHR=document.getElementById('pfMHR');
+  const pfSport=document.getElementById('pfSport');
+  const pfGoal=document.getElementById('pfGoal');
+  const pfAvail=document.getElementById('pfAvail');
+  
+  // Auto-calculate Max HR when age changes (using Tanaka formula - most accurate)
+  pfAge.addEventListener('input', function() {
+    const age = parseFloat(pfAge.value);
+    if(age && age >= 5 && age <= 100) {
+      // Tanaka formula (2001): 208 - (0.7 × age) - most accurate for adults
+      const maxHR = Math.round(208 - (0.7 * age));
+      pfMHR.placeholder = `auto: ${maxHR} bpm (Tanaka formula)`;
+      // Always update if empty (auto-calculation mode)
+      if(!pfMHR.value) {
+        pfMHR.value = maxHR;
+      }
+    } else {
+      pfMHR.placeholder = 'auto from age';
+      // Clear max HR if age is cleared and it was auto-calculated
+      if(!pfAge.value && pfMHR.value) {
+        const savedProfile = LS.get('elite_profile', {});
+        // Only clear if it's not a saved manual override
+        if(!savedProfile.mhr) {
+          pfMHR.value = '';
+        }
+      }
+    }
+  });
+  
+  // Allow user to clear Max HR to return to auto-calculation
+  pfMHR.addEventListener('input', function() {
+    if(!pfMHR.value && pfAge.value) {
+      // Re-trigger age calculation when Max HR is cleared
+      pfAge.dispatchEvent(new Event('input'));
+    }
+  });
+  
   document.getElementById('profileBtn').onclick=()=>{
     const p=LS.get('elite_profile',{});
     pfAge.value=p.age||''; pfSex.value=p.sex||''; pfHt.value=p.ht||''; pfWt.value=p.wt||'';
     pfTA.value=p.ta||''; pfRHR.value=p.rhr||''; pfMHR.value=p.mhr||''; pfSport.value=p.sport||''; pfGoal.value=p.goal||''; pfAvail.value=p.avail||'';
+    
+    // Trigger max HR calculation if age exists but max HR doesn't
+    if(pfAge.value && !pfMHR.value) {
+      pfAge.dispatchEvent(new Event('input'));
+    }
+    
     profileModal.classList.add('show');
   };
   function closeProfile(){profileModal.classList.remove('show')}
@@ -958,6 +1008,12 @@
   }
 
   const bikeProto=document.getElementById('bikeProto');
+  const bikeTarget=document.getElementById('bikeTarget');
+  const bikeRounds=document.getElementById('bikeRounds');
+  const bikeWork=document.getElementById('bikeWork');
+  const bikeRest=document.getElementById('bikeRest');
+  const bikeSleep=document.getElementById('bikeSleep');
+  const bikeCap=document.getElementById('bikeCap');
   const roundBlock=document.getElementById('roundBlock');
   const workBlock=document.getElementById('workBlock');
   const restBlock=document.getElementById('restBlock');
@@ -1229,19 +1285,20 @@
     else if(!config.showRest) bikeRest.value = '';
     
     // Set ACCURATE Target HR for each protocol
-    bikeTarget.value = config.targetHR;
-    
-    // Update Target HR placeholder based on protocol
-    const bikeTargetInput = document.getElementById('bikeTarget');
-    if(p === 'steady') {
-      bikeTargetInput.placeholder = '130-150 BPM';
-      bikeTargetInput.type = 'text';
-    } else if(config.targetHR === '') {
-      bikeTargetInput.placeholder = 'Max effort';
-      bikeTargetInput.type = 'text';
-    } else {
-      bikeTargetInput.placeholder = '% of max HR';
-      bikeTargetInput.type = 'number';
+    if(bikeTarget) {
+      bikeTarget.value = config.targetHR;
+      
+      // Update Target HR placeholder based on protocol
+      if(p === 'steady') {
+        bikeTarget.placeholder = '130-150 BPM';
+        bikeTarget.type = 'text';
+      } else if(config.targetHR === '') {
+        bikeTarget.placeholder = 'Max effort';
+        bikeTarget.type = 'text';
+      } else {
+        bikeTarget.placeholder = '% of max HR';
+        bikeTarget.type = 'number';
+      }
     }
     
     // Show/hide fields based on protocol
@@ -1477,6 +1534,14 @@
 
   renderZoneChips();
   renderCal();
+  
+  // Initialize bike UI with default protocol on page load
+  setTimeout(function() {
+    if(bikeProto) {
+      applyBikeUI();
+      updateProtocolInstructions();
+    }
+  }, 100);
 </script>
 </body>
 </html>
