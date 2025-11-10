@@ -450,6 +450,7 @@
             <label class="pill"><input type="checkbox" id="mBack" onchange="toggleSection('secBack')"> Back</label>
             <label class="pill"><input type="checkbox" id="mLegs" onchange="toggleSection('secLegs')"> Legs</label>
             <label class="pill"><input type="checkbox" id="mTrack" onchange="toggleSection('secTrack')"> Track/Plyo</label>
+            <label class="pill"><input type="checkbox" id="mStrongman" onchange="toggleSection('secStrongman')"> 🏋️ Strongman</label>
             <label class="pill"><input type="checkbox" id="mBike" onchange="toggleSection('secBike')"> Assault Bike</label>
             <label class="pill"><input type="checkbox" id="mBJJ" onchange="toggleSection('secBJJ')"> BJJ</label>
             <label class="pill"><input type="checkbox" id="mWalk" onchange="toggleSection('secWalk')"> Walking/Recovery</label>
@@ -458,21 +459,166 @@
       </div>
 
       <div class="sec" id="secChest" style="display:none">
-        <div class="hd">💪 CHEST — Strength Session</div>
-        <div class="bd" id="chestBox"></div>
+        <div class="hd">💪 CHEST / UPPER PUSH — Strength Session</div>
+        <div class="bd">
+          <div style="margin-bottom:12px">
+            <label style="font-weight:700">Select Exercise:</label>
+            <select id="chestExercise" onchange="updateChestFields()" style="width:100%;padding:8px;margin-top:4px">
+              <option value="">Choose exercise...</option>
+              <optgroup label="Horizontal Press">
+                <option value="Bench Press">Bench Press</option>
+                <option value="Close-Grip Bench">Close-Grip Bench Press</option>
+                <option value="Incline Bench Press">Incline Bench Press</option>
+                <option value="Floor Press">Floor Press</option>
+              </optgroup>
+              <optgroup label="Vertical Press">
+                <option value="Overhead Press">Overhead Press (Strict)</option>
+                <option value="Push Press">Push Press (w/ Leg Drive)</option>
+                <option value="Weighted Dips">Weighted Dips</option>
+              </optgroup>
+              <optgroup label="Bodyweight">
+                <option value="Push-Ups">Push-Ups (Standard)</option>
+                <option value="Diamond Push-Ups">Diamond Push-Ups (Triceps)</option>
+                <option value="Wide-Grip Push-Ups">Wide-Grip Push-Ups (Chest)</option>
+                <option value="Decline Push-Ups">Decline Push-Ups (Upper Chest)</option>
+              </optgroup>
+              <optgroup label="Power/Explosive">
+                <option value="Speed Bench">Speed Bench Press</option>
+                <option value="Med Ball Chest Pass">Med Ball Chest Pass</option>
+                <option value="Plyo Push-Up">Plyo Push-Up</option>
+              </optgroup>
+            </select>
+          </div>
+          <div id="chestBox"></div>
+        </div>
       </div>
       <div class="sec" id="secBack" style="display:none">
-        <div class="hd">💪 BACK — Strength Session</div>
-        <div class="bd" id="backBox"></div>
+        <div class="hd">💪 BACK / UPPER PULL — Strength Session</div>
+        <div class="bd">
+          <div style="margin-bottom:12px">
+            <label style="font-weight:700">Select Exercise:</label>
+            <select id="backExercise" onchange="updateBackFields()" style="width:100%;padding:8px;margin-top:4px">
+              <option value="">Choose exercise...</option>
+              <optgroup label="Vertical Pull">
+                <option value="Weighted Pull-Ups">Weighted Pull-Ups</option>
+                <option value="Chin-Ups">Chin-Ups (Supinated)</option>
+                <option value="Lat Pulldown">Lat Pulldown</option>
+              </optgroup>
+              <optgroup label="Horizontal Pull">
+                <option value="Barbell Row">Barbell Row</option>
+                <option value="Pendlay Row">Pendlay Row (Dead Stop)</option>
+                <option value="Chest-Supported Row">Chest-Supported Row</option>
+                <option value="Seated Cable Row">Seated Cable Row</option>
+              </optgroup>
+              <optgroup label="Grip/Clinch Specific">
+                <option value="Towel Pull-Ups">Towel Pull-Ups</option>
+                <option value="Gi Pull-Ups">Gi Pull-Ups</option>
+                <option value="Fat Grip Pull-Ups">Fat Grip Pull-Ups</option>
+                <option value="Rope Climb">Rope Climb</option>
+              </optgroup>
+              <optgroup label="Power">
+                <option value="Hang High Pull">Hang High Pull</option>
+              </optgroup>
+              <optgroup label="Accessories">
+                <option value="Face Pulls">Face Pulls</option>
+              </optgroup>
+            </select>
+          </div>
+          <div id="backBox"></div>
+        </div>
       </div>
       <div class="sec" id="secLegs" style="display:none">
         <div class="hd">💪 LEGS — Strength Session</div>
-        <div class="bd" id="legsBox"></div>
+        <div class="bd">
+          <div style="margin-bottom:12px">
+            <label style="font-weight:700">Select Exercise:</label>
+            <select id="legsExercise" onchange="updateLegsFields()" style="width:100%;padding:8px;margin-top:4px">
+              <option value="">Choose exercise...</option>
+              <optgroup label="Squat Variations">
+                <option value="Back Squat">Back Squat</option>
+                <option value="Front Squat">Front Squat</option>
+                <option value="Zercher Squat">Zercher Squat</option>
+                <option value="Box Squat">Box Squat</option>
+                <option value="Safety Bar Squat">Safety Bar Squat</option>
+                <option value="Goblet Squat">Goblet Squat</option>
+              </optgroup>
+              <optgroup label="Deadlift Variations">
+                <option value="Trap Bar Deadlift">Trap Bar Deadlift</option>
+                <option value="Sumo Deadlift">Sumo Deadlift</option>
+                <option value="Romanian Deadlift">Romanian Deadlift (RDL)</option>
+              </optgroup>
+              <optgroup label="Unilateral">
+                <option value="Bulgarian Split Squat">Bulgarian Split Squat</option>
+                <option value="Reverse Lunge">Reverse Lunge</option>
+                <option value="Walking Lunge">Walking Lunge</option>
+                <option value="Step-Up (High Box)">Step-Up (High Box)</option>
+                <option value="Single-Leg RDL">Single-Leg RDL</option>
+              </optgroup>
+              <optgroup label="Olympic/Power">
+                <option value="Power Clean">Power Clean</option>
+                <option value="Hang Power Clean">Hang Power Clean</option>
+                <option value="Clean Pull">Clean Pull</option>
+                <option value="Speed Deadlift">Speed Deadlift</option>
+                <option value="Speed Squat">Speed Squat</option>
+              </optgroup>
+              <optgroup label="Ballistic">
+                <option value="Kettlebell Swing">Kettlebell Swing</option>
+                <option value="Kettlebell Snatch">Kettlebell Snatch</option>
+                <option value="Double KB Clean">Double KB Clean</option>
+              </optgroup>
+            </select>
+          </div>
+          <div id="legsBox"></div>
+        </div>
       </div>
 
       <div class="sec" id="secTrack" style="display:none">
         <div class="hd">🏃 Track / Plyometrics — Per-Rep Logging</div>
         <div class="bd">
+          <div style="margin-bottom:12px">
+            <label style="font-weight:700">Select Exercise:</label>
+            <select id="trackExercise" onchange="updateTrackFields()" style="width:100%;padding:8px;margin-top:4px">
+              <option value="">Choose exercise...</option>
+              <optgroup label="Horizontal Power">
+                <option value="Broad Jump">Broad Jump</option>
+                <option value="Bounding">Bounding</option>
+                <option value="Lateral Bounds">Lateral Bounds</option>
+              </optgroup>
+              <optgroup label="Vertical Power">
+                <option value="Box Jump">Box Jump</option>
+                <option value="Hurdle Hops">Hurdle Hops</option>
+                <option value="Tuck Jumps">Tuck Jumps</option>
+                <option value="Split Jump">Split Jump</option>
+                <option value="Box Jump to Sprint">Box Jump to Sprint</option>
+              </optgroup>
+              <optgroup label="Reactive/Advanced">
+                <option value="Depth Jump">⚠️ Depth Jump (LP3 Only)</option>
+                <option value="Drop Landing">Drop Landing (Technique)</option>
+              </optgroup>
+              <optgroup label="Lateral">
+                <option value="Lateral Skater Hops">Lateral Skater Hops</option>
+              </optgroup>
+              <optgroup label="Elastic/Spring">
+                <option value="Pogo Hops">Pogo Hops</option>
+                <option value="Single-Leg Hop">Single-Leg Hop</option>
+              </optgroup>
+              <optgroup label="Rotational Power">
+                <option value="Med Ball Rotational Throw">Med Ball Rotational Throw</option>
+                <option value="Med Ball Shotput">Med Ball Shotput Throw</option>
+                <option value="Med Ball Overhead Slam">Med Ball Overhead Slam</option>
+                <option value="Med Ball Scoop Toss">Med Ball Scoop Toss</option>
+              </optgroup>
+              <optgroup label="Rotational Strength">
+                <option value="Landmine Rotational Press">Landmine Rotational Press</option>
+                <option value="Landmine Rainbow">Landmine Rainbow</option>
+                <option value="Cable Woodchopper High-Low">Cable Woodchopper (High-Low)</option>
+                <option value="Cable Woodchopper Low-High">Cable Woodchopper (Low-High)</option>
+                <option value="Pallof Press">Pallof Press (Anti-Rotation)</option>
+                <option value="Turkish Get-Up">Turkish Get-Up</option>
+              </optgroup>
+            </select>
+          </div>
+          <div id="trackFieldsCustom" style="display:none;margin-bottom:16px"></div>
           
           <div class="sec" style="margin-top:0;background:#0d1714;border:1px solid #1e6a4f">
             <div class="hd" style="background:#0f1b17;border-bottom:1px solid #1e6a4f;color:#9de8c5;display:flex;justify-content:space-between;align-items:center">
@@ -595,6 +741,35 @@
               <p class="muted sm">From Polar app summary for best accuracy. DFA-α1 <0.75 during easy work = autonomic overtraining.</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div class="sec" id="secStrongman" style="display:none">
+        <div class="hd">🏋️ STRONGMAN — Old School Power</div>
+        <div class="bd">
+          <div style="margin-bottom:12px">
+            <label style="font-weight:700">Select Exercise:</label>
+            <select id="strongmanExercise" onchange="updateStrongmanFields()" style="width:100%;padding:8px;margin-top:4px">
+              <option value="">Choose exercise...</option>
+              <optgroup label="Implement Work">
+                <option value="Tire Flip">Tire Flip</option>
+                <option value="Sledgehammer Slam">Sledgehammer Slam</option>
+                <option value="Atlas Stone Lift">Atlas Stone Lift</option>
+                <option value="Log Press">Log Press</option>
+              </optgroup>
+              <optgroup label="Loaded Carries">
+                <option value="Keg Carry">Keg Carry</option>
+                <option value="Sandbag Shouldering">Sandbag Shouldering</option>
+                <option value="Tire Drag">Tire Drag</option>
+                <option value="Yoke Walk">Yoke Walk</option>
+              </optgroup>
+              <optgroup label="Heavy Bag">
+                <option value="Heavy Bag Punches">Heavy Bag Punches</option>
+                <option value="Heavy Bag Kicks">Heavy Bag Kicks</option>
+              </optgroup>
+            </select>
+          </div>
+          <div id="strongmanBox"></div>
         </div>
       </div>
 
@@ -796,43 +971,142 @@
       {name:'Trap Bar Deadlift',sets:[4,5],reps:[3,5],int:0.85,rest:180,tempo:'Explosive up, controlled down'},
       {name:'Back Squat',sets:[4,5],reps:[3,5],int:0.80,rest:180,tempo:'Controlled descent, explosive drive'},
       {name:'Front Squat',sets:[4,5],reps:[4,6],int:0.78,rest:150,tempo:'Controlled descent, explosive drive'},
-      {name:'Bulgarian Split Squat',sets:[3,4],reps:[6,8],int:0.70,rest:90,tempo:'2-sec pause at bottom'}
+      {name:'Zercher Squat',sets:[3,4],reps:[5,8],int:0.70,rest:120,tempo:'Slow eccentric, explosive concentric'},
+      {name:'Bulgarian Split Squat',sets:[3,4],reps:[6,8],int:0.70,rest:90,tempo:'2-sec pause at bottom'},
+      {name:'Reverse Lunge',sets:[3,4],reps:[6,8],int:0.65,rest:90,tempo:'Controlled descent, explosive return'},
+      {name:'Romanian Deadlift',sets:[3,4],reps:[6,8],int:0.75,rest:120,tempo:'Hinge at hips, hamstring stretch'},
+      {name:'Sumo Deadlift',sets:[4,5],reps:[3,5],int:0.82,rest:180,tempo:'Wide stance, vertical torso'},
+      {name:'Box Squat',sets:[5,6],reps:[3,5],int:0.75,rest:150,tempo:'Pause on box, explosive up'},
+      {name:'Safety Bar Squat',sets:[4,5],reps:[4,6],int:0.78,rest:150,tempo:'Upright torso, deep squat'},
+      {name:'Walking Lunge',sets:[3,4],reps:[10,12],int:0.60,rest:90,tempo:'Long strides, knee to ground'},
+      {name:'Step-Up (High Box)',sets:[3,4],reps:[6,8],int:0.70,rest:90,tempo:'Drive through front leg'},
+      {name:'Single-Leg RDL',sets:[3,4],reps:[8,10],int:0.60,rest:75,tempo:'Balance and posterior chain'},
+      {name:'Goblet Squat',sets:[3,4],reps:[10,12],int:0.65,rest:60,tempo:'Upright torso, deep squat'}
     ],
     strengthUpper: [
-      {name:'Weighted Pull-Ups',sets:[4,5],reps:[4,6],int:0.80,rest:150,tempo:'Controlled up, pause, controlled down'},
       {name:'Bench Press',sets:[4,5],reps:[3,5],int:0.85,rest:180,tempo:'Touch chest, explosive press'},
       {name:'Close-Grip Bench',sets:[4,5],reps:[4,6],int:0.82,rest:180,tempo:'Pause at chest, explosive press'},
-      {name:'Overhead Press',sets:[3,4],reps:[5,8],int:0.75,rest:120,tempo:'Strict form, no leg drive'}
+      {name:'Incline Bench Press',sets:[4,5],reps:[4,6],int:0.80,rest:150,tempo:'30-45 degree angle'},
+      {name:'Floor Press',sets:[4,5],reps:[4,6],int:0.82,rest:150,tempo:'Elbows touch floor, explosive press'},
+      {name:'Weighted Pull-Ups',sets:[4,5],reps:[4,6],int:0.80,rest:150,tempo:'Controlled up, pause, controlled down'},
+      {name:'Chin-Ups',sets:[4,5],reps:[5,8],int:0.75,rest:120,tempo:'Supinated grip, full ROM'},
+      {name:'Weighted Dips',sets:[3,4],reps:[5,8],int:0.75,rest:120,tempo:'Full ROM, controlled tempo'},
+      {name:'Push-Ups',sets:[3,5],reps:[15,25],int:0.65,rest:60,tempo:'Chest to floor, full lockout'},
+      {name:'Diamond Push-Ups',sets:[3,4],reps:[10,15],int:0.70,rest:75,tempo:'Hands together, tricep focus'},
+      {name:'Wide-Grip Push-Ups',sets:[3,4],reps:[12,20],int:0.68,rest:60,tempo:'Hands wide, chest focus'},
+      {name:'Decline Push-Ups',sets:[3,4],reps:[12,18],int:0.72,rest:75,tempo:'Feet elevated, upper chest focus'},
+      {name:'Overhead Press',sets:[3,4],reps:[5,8],int:0.75,rest:120,tempo:'Strict form, no leg drive'},
+      {name:'Push Press',sets:[4,5],reps:[4,6],int:0.80,rest:120,tempo:'Leg drive into press'},
+      {name:'Barbell Row',sets:[4,5],reps:[5,8],int:0.78,rest:120,tempo:'Pull to sternum, control descent'},
+      {name:'Pendlay Row',sets:[4,5],reps:[5,8],int:0.80,rest:120,tempo:'Dead stop each rep'},
+      {name:'Chest-Supported Row',sets:[3,4],reps:[8,10],int:0.75,rest:90,tempo:'No momentum, strict'},
+      {name:'Seated Cable Row',sets:[3,4],reps:[8,12],int:0.70,rest:75,tempo:'Squeeze shoulder blades'},
+      {name:'Face Pulls',sets:[3,4],reps:[12,15],int:0.60,rest:60,tempo:'High pull to face'},
+      {name:'Lat Pulldown',sets:[3,4],reps:[8,12],int:0.72,rest:90,tempo:'Pull to upper chest'}
     ],
     power: [
       {name:'Power Clean',sets:[4,5],reps:[2,3],int:0.75,rest:180,tempo:'Explosive triple extension'},
+      {name:'Power Snatch',sets:[4,5],reps:[2,3],int:0.70,rest:180,tempo:'Fast pull, aggressive catch'},
+      {name:'Hang Power Clean',sets:[4,5],reps:[2,3],int:0.72,rest:180,tempo:'From mid-thigh'},
+      {name:'Hang Power Snatch',sets:[4,5],reps:[2,3],int:0.68,rest:180,tempo:'From mid-thigh'},
+      {name:'Clean Pull',sets:[4,5],reps:[3,5],int:0.85,rest:150,tempo:'Explosive pull, no catch'},
+      {name:'Snatch Pull',sets:[4,5],reps:[3,5],int:0.80,rest:150,tempo:'Explosive pull, no catch'},
       {name:'Hang High Pull',sets:[4,5],reps:[3,5],int:0.70,rest:150,tempo:'Explosive shrug and pull'},
-      {name:'Kettlebell Swing',sets:[4,5],reps:[10,15],int:0.70,rest:90,tempo:'Ballistic hip snap'}
+      {name:'Speed Deadlift',sets:[6,8],reps:[2,3],int:0.60,rest:90,tempo:'Max speed off floor'},
+      {name:'Speed Squat',sets:[6,8],reps:[2,3],int:0.60,rest:90,tempo:'Explosive concentric'},
+      {name:'Speed Bench',sets:[6,8],reps:[3,5],int:0.60,rest:60,tempo:'Explosive press, fast lockout'},
+      {name:'Kettlebell Swing',sets:[4,5],reps:[10,15],int:0.70,rest:90,tempo:'Ballistic hip snap'},
+      {name:'Kettlebell Snatch',sets:[4,5],reps:[6,8],int:0.72,rest:120,tempo:'Hip snap, overhead lockout'},
+      {name:'Double KB Clean',sets:[4,5],reps:[5,8],int:0.70,rest:120,tempo:'Explosive pull to rack'},
+      {name:'Dumbbell Snatch',sets:[4,5],reps:[6,8],int:0.68,rest:90,tempo:'Single-arm power'}
     ],
     rotational: [
       {name:'Med Ball Rotational Throw',sets:[3,4],reps:[6,8],int:0.70,rest:90,tempo:'Explosive hip rotation, both sides'},
-      {name:'Med Ball Shotput Throw',sets:[3,4],reps:[5,6],int:0.75,rest:90,tempo:'Max power, step into throw'},
-      {name:'Landmine Rotational Press',sets:[3,4],reps:[6,8],int:0.70,rest:75,tempo:'Rotate from hips'}
+      {name:'Med Ball Shotput',sets:[3,4],reps:[5,6],int:0.75,rest:90,tempo:'Max power, step into throw'},
+      {name:'Med Ball Overhead Slam',sets:[3,4],reps:[8,10],int:0.70,rest:75,tempo:'Triple extension, aggressive slam'},
+      {name:'Med Ball Scoop Toss',sets:[3,4],reps:[6,8],int:0.68,rest:90,tempo:'Low to high explosive'},
+      {name:'Landmine Rotational Press',sets:[3,4],reps:[6,8],int:0.70,rest:75,tempo:'Rotate from hips, explosive press'},
+      {name:'Landmine Rainbow',sets:[3,4],reps:[8,10],int:0.65,rest:75,tempo:'Arc motion, control'},
+      {name:'Cable Woodchopper High-Low',sets:[3],reps:[8,10],int:0.65,rest:60,tempo:'Controlled rotation, explosive chop'},
+      {name:'Cable Woodchopper Low-High',sets:[3],reps:[8,10],int:0.65,rest:60,tempo:'Drive from legs, rotate core'},
+      {name:'Pallof Press',sets:[3,4],reps:[10,12],int:0.60,rest:60,tempo:'Anti-rotation hold'},
+      {name:'Turkish Get-Up',sets:[3,4],reps:[3,5],int:0.65,rest:120,tempo:'Controlled, all positions'},
+      {name:'Rotational KB Swing',sets:[3,4],reps:[8,10],int:0.65,rest:90,tempo:'Light weight, max rotation speed'},
+      {name:'Single-Arm Landmine Press',sets:[3,4],reps:[6,8],int:0.72,rest:90,tempo:'Resist rotation'}
     ],
     plyometric: [
       {name:'Broad Jump',sets:[3,5],reps:[3,5],int:0.90,rest:120,tempo:'Max effort, soft landing'},
       {name:'Box Jump',sets:[3,5],reps:[3,5],int:0.85,rest:120,tempo:'Explosive takeoff, stick landing'},
-      {name:'Lateral Skater Hops',sets:[3,4],reps:[6,8],int:0.75,rest:90,tempo:'Quick ground contact'},
-      {name:'Bounding',sets:[3,4],reps:[20,30],int:0.80,rest:120,tempo:'Long strides, max distance'}
+      {name:'Depth Jump',sets:[3,4],reps:[3,5],int:0.95,rest:180,tempo:'LP3 ONLY - Max reactive'},
+      {name:'Hurdle Hops',sets:[3,4],reps:[6,8],int:0.82,rest:120,tempo:'Quick ground contact'},
+      {name:'Lateral Skater Hops',sets:[3,4],reps:[6,8],int:0.75,rest:90,tempo:'Quick lateral power'},
+      {name:'Bounding',sets:[3,4],reps:[20,30],int:0.80,rest:120,tempo:'Long strides, max distance'},
+      {name:'Pogo Hops',sets:[3,4],reps:[10,15],int:0.70,rest:90,tempo:'Minimal ground contact'},
+      {name:'Single-Leg Hop',sets:[3,4],reps:[5,8],int:0.75,rest:90,tempo:'Balance and power'},
+      {name:'Tuck Jumps',sets:[3,4],reps:[6,8],int:0.85,rest:120,tempo:'Knees to chest'},
+      {name:'Split Jump',sets:[3,4],reps:[8,10],int:0.78,rest:90,tempo:'Explosive lunge jump'},
+      {name:'Lateral Bounds',sets:[3,4],reps:[6,8],int:0.80,rest:120,tempo:'Single-leg lateral'},
+      {name:'Drop Landing',sets:[3,4],reps:[5,6],int:0.75,rest:120,tempo:'Absorption drill'},
+      {name:'Box Jump to Sprint',sets:[3,4],reps:[4,5],int:0.88,rest:180,tempo:'Jump + 10yd sprint'}
+    ],
+    conditioning: [
+      {name:'Assault Bike C2 Protocol',sets:[6,8],reps:['25s cap'],int:0.95,rest:'HR<140',tempo:'Max RPM until HR Zone 5'},
+      {name:'Assault Bike Sprints',sets:[8,10],reps:[20,30],int:0.90,rest:90,tempo:'All-out'},
+      {name:'Assault Bike Tabata',sets:[8],reps:[20],int:0.95,rest:10,tempo:'20s on / 10s off'},
+      {name:'Track 200m Repeats',sets:[6,8],reps:['200m'],int:0.85,rest:120,tempo:'<35s men, <40s women'},
+      {name:'Track 150m Repeats',sets:[8,10],reps:['150m'],int:0.90,rest:90,tempo:'Near-sprint pace'},
+      {name:'Track 400m Repeats',sets:[4,6],reps:['400m'],int:0.80,rest:180,tempo:'<80s men, <90s women'},
+      {name:'Hill Sprints',sets:[6,8],reps:['30-50m'],int:0.92,rest:120,tempo:'Max effort uphill'},
+      {name:'Row Intervals 500m',sets:[6,8],reps:['500m'],int:0.85,rest:120,tempo:'<1:50 men, <2:10 women'},
+      {name:'Row Intervals 250m',sets:[10,12],reps:['250m'],int:0.90,rest:60,tempo:'Sprint pace'},
+      {name:'Sled Push Sprints',sets:[6,8],reps:['20-40m'],int:0.90,rest:90,tempo:'Max drive'},
+      {name:'Prowler Push',sets:[6,8],reps:['40m'],int:0.88,rest:120,tempo:'Steady powerful drive'},
+      {name:'Battle Ropes',sets:[6,8],reps:[30],int:0.85,rest:60,tempo:'Max intensity waves'}
+    ],
+    endurance: [
+      {name:'Zone 2 Bike',sets:[1],reps:['45-75min'],int:0.65,rest:0,tempo:'HR 130-150, conversational'},
+      {name:'Zone 2 Run',sets:[1],reps:['30-60min'],int:0.65,rest:0,tempo:'Easy pace, nasal breathing'},
+      {name:'Zone 2 Row',sets:[1],reps:['20-40min'],int:0.65,rest:0,tempo:'Steady sustainable pace'},
+      {name:'Long Sled Push/Pull',sets:[3,4],reps:['100-200m'],int:0.60,rest:180,tempo:'Steady pace'},
+      {name:'Farmer Carry Distance',sets:[3,4],reps:['100-200m'],int:0.70,rest:120,tempo:'Moderate load'},
+      {name:'Shadowboxing Flow',sets:[5,6],reps:['3-5min'],int:0.50,rest:60,tempo:'Continuous movement'},
+      {name:'Light Sparring',sets:[4,6],reps:['3-5min'],int:0.60,rest:90,tempo:'Technical flow'},
+      {name:'Swimming',sets:[1],reps:['20-40min'],int:0.65,rest:0,tempo:'Easy continuous'}
     ],
     clinch: [
       {name:'Rope Climb',sets:[3,5],reps:[3,5],int:0.85,rest:120,tempo:'No legs if possible'},
       {name:'Towel Pull-Ups',sets:[3,4],reps:[6,10],int:0.80,rest:120,tempo:'Slow controlled'},
-      {name:'Farmer Carry',sets:[3,4],reps:['40-60m'],int:0.90,rest:120,tempo:'Fast walk, tight core'}
+      {name:'Gi Pull-Ups',sets:[3,4],reps:[6,10],int:0.80,rest:120,tempo:'Grip endurance'},
+      {name:'Fat Grip Pull-Ups',sets:[3,4],reps:[6,10],int:0.78,rest:120,tempo:'Thick bar'},
+      {name:'Farmer Carry Heavy',sets:[3,4],reps:['40-60m'],int:0.90,rest:120,tempo:'Fast walk, tight core'},
+      {name:'Suitcase Carry',sets:[3,4],reps:['40-60m'],int:0.85,rest:90,tempo:'Single-arm, anti-rotation'},
+      {name:'Zercher Carry',sets:[3,4],reps:['30-50m'],int:0.85,rest:120,tempo:'Frame control'},
+      {name:'Overhead Carry',sets:[3,4],reps:['30-50m'],int:0.75,rest:120,tempo:'Stability overhead'},
+      {name:'Sandbag Carry',sets:[3,4],reps:['40-60m'],int:0.82,rest:120,tempo:'Bear hug position'},
+      {name:'Plate Pinch Hold',sets:[3,4],reps:['30-60s'],int:0.80,rest:90,tempo:'Pinch grip'},
+      {name:'Dead Hang',sets:[3,4],reps:['max'],int:0.75,rest:120,tempo:'Full hang to failure'},
+      {name:'Bodylock Hold',sets:[3,4],reps:['30-45s'],int:0.80,rest:90,tempo:'Squeeze and hold'}
+    ],
+    strongman: [
+      {name:'Tire Flip',sets:[4,6],reps:[5,8],int:0.90,rest:120,tempo:'Explosive hip drive, push overhead'},
+      {name:'Sledgehammer Slam',sets:[4,6],reps:[10,15],int:0.85,rest:90,tempo:'Overhead slam, alternate sides'},
+      {name:'Heavy Bag Punches',sets:[6,8],reps:['3min'],int:0.80,rest:60,tempo:'Max power combos'},
+      {name:'Heavy Bag Kicks',sets:[4,6],reps:['3min'],int:0.82,rest:90,tempo:'Full power kicks, both sides'},
+      {name:'Atlas Stone Lift',sets:[3,5],reps:[3,5],int:0.92,rest:180,tempo:'Bear hug, explosive lift to platform'},
+      {name:'Sandbag Shouldering',sets:[4,6],reps:[6,10],int:0.85,rest:120,tempo:'Ground to shoulder, alternate sides'},
+      {name:'Tire Drag',sets:[4,6],reps:['40-60m'],int:0.88,rest:120,tempo:'Low stance, powerful drive'},
+      {name:'Keg Carry',sets:[3,4],reps:['30-50m'],int:0.87,rest:120,tempo:'Bear hug, steady pace'},
+      {name:'Log Press',sets:[4,5],reps:[3,5],int:0.82,rest:180,tempo:'Clean to shoulders, press overhead'},
+      {name:'Yoke Walk',sets:[3,5],reps:['30-50m'],int:0.95,rest:180,tempo:'Fast controlled walk, stay upright'}
     ]
   };
   
   const SESSION_MAP = {
     'Strength Upper':['strengthUpper','rotational','clinch'],
     'Strength Lower':['strengthLower','power'],
-    'Strength Full Body':['strengthLower','strengthUpper'],
-    'Striking':['rotational','power'],
-    'Track/Plyometrics':['plyometric']
+    'Strength Full Body':['strengthLower','strengthUpper','strongman'],
+    'Striking':['rotational','power','conditioning','strongman'],
+    'Track/Plyometrics':['plyometric','conditioning']
   };
 
   function calcZones(profile){
@@ -1185,8 +1459,8 @@
   function openDay(date){
     curKey=toKey(date);
     document.getElementById('dayTitle').textContent=date.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-    ['mChest','mBack','mLegs','mTrack','mBike','mBJJ','mWalk'].forEach(id=>document.getElementById(id).checked=false);
-    ['secChest','secBack','secLegs','secTrack','secBike','secBJJ','secWalk'].forEach(id=>document.getElementById(id).style.display='none');
+    ['mChest','mBack','mLegs','mTrack','mStrongman','mBike','mBJJ','mWalk'].forEach(id=>document.getElementById(id).checked=false);
+    ['secChest','secBack','secLegs','secTrack','secStrongman','secBike','secBJJ','secWalk'].forEach(id=>document.getElementById(id).style.display='none');
     const saved=store[curKey];
     if(saved){
       Object.keys(saved.modalities||{}).forEach(k=>{
@@ -1252,6 +1526,394 @@
   }
   function closeDay(){dayModal.classList.remove('show')}
   function toggleSection(id){const el=document.getElementById(id); el.style.display=(el.style.display==='none'?'block':'none')}
+
+  // ============================================
+  // EXERCISE-SPECIFIC FIELD UPDATES
+  // ============================================
+  
+  function updateChestFields() {
+    const exercise = document.getElementById('chestExercise').value;
+    const box = document.getElementById('chestBox');
+    
+    if(!exercise) {
+      box.innerHTML = '';
+      return;
+    }
+    
+    // Standard strength exercises
+    if(['Bench Press', 'Close-Grip Bench', 'Incline Bench Press', 'Floor Press', 'Overhead Press', 'Push Press', 'Weighted Dips'].includes(exercise)) {
+      initStrength('chestBox');
+      box.insertAdjacentHTML('afterbegin', `<div class="note" style="margin-bottom:8px"><b>${exercise}</b> - Standard sets × reps format</div>`);
+    }
+    // Bodyweight push-ups
+    else if(['Push-Ups', 'Diamond Push-Ups', 'Wide-Grip Push-Ups', 'Decline Push-Ups'].includes(exercise)) {
+      box.innerHTML = `
+        <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Bodyweight conditioning</div>
+        <div class="grid2">
+          <div><label>Sets</label><input id="chestSets" type="number" placeholder="4"></div>
+          <div><label>Target Reps per Set</label><input id="chestReps" type="number" placeholder="20"></div>
+          <div><label>Actual Reps per Set</label><input id="chestActualReps" type="text" placeholder="20,18,17,15"></div>
+          <div><label>RPE (1-10)</label><input id="chestRPE" type="number" min="1" max="10" placeholder="7"></div>
+          <div><label>Tempo</label><select id="chestTempo"><option>Controlled 2-0-1</option><option>Explosive up</option><option>Pause at bottom</option></select></div>
+          <div><label>Form Quality</label><select id="chestForm"><option>Perfect ROM</option><option>Good</option><option>Breakdown</option></select></div>
+        </div>
+      `;
+    }
+    // Speed work
+    else if(exercise === 'Speed Bench') {
+      box.innerHTML = `
+        <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Dynamic Effort (6-8 sets)</div>
+        <div class="grid2">
+          <div><label>Weight (% 1RM)</label><input id="chestWeight" type="number" placeholder="60"></div>
+          <div><label>Sets (6-8)</label><input id="chestSets" type="number" placeholder="8"></div>
+          <div><label>Reps per Set (3)</label><input id="chestReps" type="number" value="3" readonly></div>
+          <div><label>Bar Speed</label><select id="chestSpeed"><option>Explosive</option><option>Fast</option><option>Moderate</option></select></div>
+        </div>
+      `;
+    }
+    // Power exercises
+    else if(exercise === 'Med Ball Chest Pass') {
+      box.innerHTML = `
+        <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Explosive power exercise</div>
+        <div class="grid2">
+          <div><label>Ball Weight (lb)</label><input id="chestBallWeight" type="number" placeholder="10"></div>
+          <div><label>Total Throws</label><input id="chestThrows" type="number" placeholder="20"></div>
+          <div><label>Distance (ft) - Best</label><input id="chestDistance" type="number" step="0.1" placeholder="12.5"></div>
+          <div><label>RPE (1-10)</label><input id="chestRPE" type="number" min="1" max="10" placeholder="8"></div>
+        </div>
+      `;
+    }
+    else if(exercise === 'Plyo Push-Up') {
+      box.innerHTML = `
+        <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Explosive bodyweight</div>
+        <div class="grid2">
+          <div><label>Sets</label><input id="chestSets" type="number" placeholder="3"></div>
+          <div><label>Reps per Set</label><input id="chestReps" type="number" placeholder="8"></div>
+          <div><label>Height off ground</label><select id="chestHeight"><option>Hands leave ground</option><option>Clap capable</option><option>Full clap achieved</option></select></div>
+          <div><label>RPE (1-10)</label><input id="chestRPE" type="number" min="1" max="10" placeholder="7"></div>
+        </div>
+      `;
+    }
+  }
+  
+  function updateBackFields() {
+    const exercise = document.getElementById('backExercise').value;
+    const box = document.getElementById('backBox');
+    
+    if(!exercise) {
+      box.innerHTML = '';
+      return;
+    }
+    
+    // Standard strength exercises
+    if(['Weighted Pull-Ups', 'Chin-Ups', 'Towel Pull-Ups', 'Gi Pull-Ups', 'Fat Grip Pull-Ups', 'Hang High Pull', 'Barbell Row', 'Pendlay Row', 'Chest-Supported Row', 'Seated Cable Row', 'Lat Pulldown'].includes(exercise)) {
+      initStrength('backBox');
+      box.insertAdjacentHTML('afterbegin', `<div class="note" style="margin-bottom:8px"><b>${exercise}</b> - Standard sets × reps format</div>`);
+    }
+    // Face Pulls (accessory)
+    else if(exercise === 'Face Pulls') {
+      box.innerHTML = `
+        <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Rear delt/upper back health</div>
+        <div class="grid2">
+          <div><label>Weight (lb)</label><input id="backWeight" type="number" placeholder="60"></div>
+          <div><label>Sets (3-4)</label><input id="backSets" type="number" placeholder="3"></div>
+          <div><label>Reps per Set (12-15)</label><input id="backReps" type="number" placeholder="15"></div>
+          <div><label>RPE (1-10)</label><input id="backRPE" type="number" min="1" max="10" placeholder="6"></div>
+        </div>
+      `;
+    }
+    // Rope Climb
+    else if(exercise === 'Rope Climb') {
+      box.innerHTML = `
+        <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Grip & conditioning</div>
+        <div class="grid2">
+          <div><label>Number of Climbs</label><input id="backClimbs" type="number" placeholder="5"></div>
+          <div><label>Height (ft)</label><input id="backHeight" type="number" placeholder="15"></div>
+          <div><label>Legs Used?</label><select id="backLegs"><option value="no">No (legless)</option><option value="yes">Yes (with legs)</option></select></div>
+          <div><label>RPE (1-10)</label><input id="backRPE" type="number" min="1" max="10" placeholder="8"></div>
+        </div>
+      `;
+    }
+  }
+  
+  function updateLegsFields() {
+    const exercise = document.getElementById('legsExercise').value;
+    const box = document.getElementById('legsBox');
+    
+    if(!exercise) {
+      box.innerHTML = '';
+      return;
+    }
+    
+    // Standard barbell exercises
+    if(['Trap Bar Deadlift', 'Back Squat', 'Front Squat', 'Zercher Squat', 'Bulgarian Split Squat', 'Reverse Lunge', 'Romanian Deadlift', 'Sumo Deadlift', 'Box Squat', 'Safety Bar Squat', 'Walking Lunge', 'Step-Up (High Box)', 'Single-Leg RDL', 'Goblet Squat', 'Power Clean', 'Hang Power Clean', 'Clean Pull'].includes(exercise)) {
+      initStrength('legsBox');
+      box.insertAdjacentHTML('afterbegin', `<div class="note" style="margin-bottom:8px"><b>${exercise}</b> - Standard sets × reps format</div>`);
+    }
+    // Speed work
+    else if(['Speed Deadlift', 'Speed Squat'].includes(exercise)) {
+      box.innerHTML = `
+        <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Dynamic Effort (6-8 sets)</div>
+        <div class="grid2">
+          <div><label>Weight (% 1RM)</label><input id="legsWeight" type="number" placeholder="60"></div>
+          <div><label>Sets (6-8)</label><input id="legsSets" type="number" placeholder="6"></div>
+          <div><label>Reps per Set (2-3)</label><input id="legsReps" type="number" placeholder="2"></div>
+          <div><label>Bar Speed</label><select id="legsSpeed"><option>Explosive</option><option>Fast</option><option>Moderate</option></select></div>
+        </div>
+      `;
+    }
+    // KB exercises
+    else if(['Kettlebell Swing', 'Kettlebell Snatch', 'Double KB Clean'].includes(exercise)) {
+      box.innerHTML = `
+        <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Ballistic/power</div>
+        <div class="grid2">
+          <div><label>KB Weight (lb)</label><input id="legsKBWeight" type="number" placeholder="53"></div>
+          <div><label>Sets</label><input id="legsSets" type="number" placeholder="4"></div>
+          <div><label>Reps per Set</label><input id="legsReps" type="number" placeholder="15"></div>
+          <div><label>RPE (1-10)</label><input id="legsRPE" type="number" min="1" max="10" placeholder="7"></div>
+        </div>
+      `;
+    }
+  }
+  
+  function updateTrackFields() {
+    const exercise = document.getElementById('trackExercise').value;
+    const box = document.getElementById('trackFieldsCustom');
+    
+    if(!exercise) {
+      box.style.display = 'none';
+      return;
+    }
+    
+    box.style.display = 'block';
+    
+    // Horizontal jumps
+    if(['Broad Jump', 'Bounding', 'Lateral Bounds'].includes(exercise)) {
+      box.innerHTML = `
+        <div class="sec" style="background:#0d1714;border:2px solid #00ffb3">
+          <div class="hd" style="background:#00ffb3;color:#0a0f0d">${exercise} - Horizontal Power</div>
+          <div class="bd">
+            <div class="grid2">
+              <div><label>${exercise === 'Bounding' ? 'Sets' : 'Total Jumps'}</label><input id="trackJumps" type="number" placeholder="${exercise === 'Bounding' ? '4' : '15'}"></div>
+              <div><label>${exercise === 'Bounding' ? 'Distance per Set (yd)' : 'Best Distance (ft)'}</label><input id="trackDistance" type="number" step="0.1" placeholder="${exercise === 'Bounding' ? '30' : '8.5'}"></div>
+              <div><label>Landing Quality</label><select id="trackLanding"><option>Soft & controlled</option><option>Some stumble</option><option>Hard/unstable</option></select></div>
+              <div><label>RPE (1-10)</label><input id="trackRPE" type="number" min="1" max="10" placeholder="7"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    // Vertical jumps
+    else if(['Box Jump', 'Hurdle Hops', 'Tuck Jumps', 'Split Jump', 'Box Jump to Sprint'].includes(exercise)) {
+      box.innerHTML = `
+        <div class="sec" style="background:#0d1714;border:2px solid #00ffb3">
+          <div class="hd" style="background:#00ffb3;color:#0a0f0d">${exercise} - Vertical Power</div>
+          <div class="bd">
+            <div class="grid2">
+              <div><label>Total Jumps</label><input id="trackJumps" type="number" placeholder="15"></div>
+              <div><label>${exercise === 'Box Jump' || exercise === 'Box Jump to Sprint' ? 'Box Height (in)' : exercise === 'Hurdle Hops' ? 'Hurdle Height (in)' : 'Flight Quality'}</label>${exercise === 'Box Jump' || exercise === 'Box Jump to Sprint' || exercise === 'Hurdle Hops' ? `<input id="trackHeight" type="number" placeholder="30">` : `<select id="trackQuality"><option>Explosive & high</option><option>Moderate</option><option>Low/sluggish</option></select>`}</div>
+              <div><label>Landing Quality</label><select id="trackLanding"><option>Soft & controlled</option><option>Some stumble</option><option>Hard/unstable</option></select></div>
+              <div><label>RPE (1-10)</label><input id="trackRPE" type="number" min="1" max="10" placeholder="7"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    // Reactive/Advanced
+    else if(['Depth Jump', 'Drop Landing'].includes(exercise)) {
+      box.innerHTML = `
+        <div class="sec" style="background:#0d1714;border:2px solid #ff6b6b">
+          <div class="hd" style="background:#ff6b6b;color:#fff">⚠️ ${exercise} - ADVANCED (High CNS)</div>
+          <div class="bd">
+            <div class="note" style="color:#ff6b6b;font-weight:700;margin-bottom:12px">⚠️ ${exercise === 'Depth Jump' ? 'LP3 ONLY - Max reactive strength. Use only when peaked.' : 'Eccentric absorption drill - Focus on landing mechanics.'}</div>
+            <div class="grid2">
+              <div><label>Drop Height (in)</label><input id="trackHeight" type="number" placeholder="${exercise === 'Depth Jump' ? '18' : '12'}"></div>
+              <div><label>Total Reps</label><input id="trackReps" type="number" placeholder="${exercise === 'Depth Jump' ? '12' : '10'}"></div>
+              <div><label>Contact Time</label><select id="trackContact"><option>Instant (<0.2s)</option><option>Quick (0.2-0.3s)</option><option>Slow (>0.3s)</option></select></div>
+              <div><label>RPE (1-10)</label><input id="trackRPE" type="number" min="1" max="10" placeholder="9"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    // Lateral
+    else if(exercise === 'Lateral Skater Hops') {
+      box.innerHTML = `
+        <div class="sec" style="background:#0d1714;border:2px solid #00ffb3">
+          <div class="hd" style="background:#00ffb3;color:#0a0f0d">${exercise} - Lateral Power</div>
+          <div class="bd">
+            <div class="grid2">
+              <div><label>Sets</label><input id="trackSets" type="number" placeholder="4"></div>
+              <div><label>Reps per Set</label><input id="trackReps" type="number" placeholder="8"></div>
+              <div><label>Quality</label><select id="trackQuality"><option>Explosive & quick</option><option>Moderate</option><option>Slow/sluggish</option></select></div>
+              <div><label>RPE (1-10)</label><input id="trackRPE" type="number" min="1" max="10" placeholder="7"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    // Elastic/Spring
+    else if(['Pogo Hops', 'Single-Leg Hop'].includes(exercise)) {
+      box.innerHTML = `
+        <div class="sec" style="background:#0d1714;border:2px solid #00ffb3">
+          <div class="hd" style="background:#00ffb3;color:#0a0f0d">${exercise} - Elastic/Reactive</div>
+          <div class="bd">
+            <div class="grid2">
+              <div><label>Sets</label><input id="trackSets" type="number" placeholder="4"></div>
+              <div><label>Reps per Set</label><input id="trackReps" type="number" placeholder="${exercise === 'Pogo Hops' ? '15' : '8'}"></div>
+              <div><label>Ground Contact</label><select id="trackContact"><option>Instant/Springy</option><option>Quick</option><option>Slow</option></select></div>
+              <div><label>RPE (1-10)</label><input id="trackRPE" type="number" min="1" max="10" placeholder="7"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    // Rotational Power (Med Ball throws)
+    else if(['Med Ball Rotational Throw', 'Med Ball Shotput', 'Med Ball Overhead Slam', 'Med Ball Scoop Toss'].includes(exercise)) {
+      const needsSides = exercise === 'Med Ball Rotational Throw' || exercise === 'Med Ball Shotput';
+      box.innerHTML = `
+        <div class="sec" style="background:#0d1714;border:2px solid #00ffb3">
+          <div class="hd" style="background:#00ffb3;color:#0a0f0d">${exercise} - Rotational Power</div>
+          <div class="bd">
+            <div class="grid2">
+              <div><label>Ball Weight (lb)</label><input id="trackBallWeight" type="number" placeholder="10"></div>
+              <div><label>${needsSides ? 'Throws per Side' : 'Total Throws'}</label><input id="trackThrows" type="number" placeholder="${needsSides ? '8' : '15'}"></div>
+              ${needsSides ? `
+                <div><label>Right Side Distance (ft)</label><input id="trackDistanceR" type="number" step="0.1" placeholder="10.5"></div>
+                <div><label>Left Side Distance (ft)</label><input id="trackDistanceL" type="number" step="0.1" placeholder="9.8"></div>
+                <div><label>RPE (1-10)</label><input id="trackRPE" type="number" min="1" max="10" placeholder="7"></div>
+                <div style="color:#9de8c5;font-size:12px;padding-top:10px" id="trackImbalance"></div>
+              ` : `
+                <div><label>Best Distance (ft)</label><input id="trackDistance" type="number" step="0.1" placeholder="12"></div>
+                <div><label>RPE (1-10)</label><input id="trackRPE" type="number" min="1" max="10" placeholder="7"></div>
+              `}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Add real-time imbalance calculation for bilateral throws
+      if(needsSides) {
+        setTimeout(() => {
+          ['trackDistanceR', 'trackDistanceL'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) {
+              el.addEventListener('input', () => {
+                const r = parseFloat(document.getElementById('trackDistanceR').value) || 0;
+                const l = parseFloat(document.getElementById('trackDistanceL').value) || 0;
+                if(r > 0 && l > 0) {
+                  const diff = Math.abs(r - l);
+                  const avg = (r + l) / 2;
+                  const percent = (diff / avg) * 100;
+                  const msg = document.getElementById('trackImbalance');
+                  if(percent < 10) {
+                    msg.textContent = `Imbalance: ${percent.toFixed(1)}% (Balanced - good)`;
+                    msg.style.color = '#00ffb3';
+                  } else if(percent < 20) {
+                    msg.textContent = `Imbalance: ${percent.toFixed(1)}% (Acceptable)`;
+                    msg.style.color = '#9de8c5';
+                  } else {
+                    msg.textContent = `Imbalance: ${percent.toFixed(1)}% (Injury risk - needs work)`;
+                    msg.style.color = '#ff6b6b';
+                  }
+                }
+              });
+            }
+          });
+        }, 100);
+      }
+    }
+    // Rotational Strength (Landmine, Cable, etc.)
+    else if(['Landmine Rotational Press', 'Landmine Rainbow', 'Cable Woodchopper High-Low', 'Cable Woodchopper Low-High', 'Pallof Press', 'Turkish Get-Up'].includes(exercise)) {
+      box.innerHTML = `
+        <div class="sec" style="background:#0d1714;border:2px solid #00ffb3">
+          <div class="hd" style="background:#00ffb3;color:#0a0f0d">${exercise} - Rotational Strength</div>
+          <div class="bd">
+            <div class="note" style="margin-bottom:8px"><b>${exercise}</b> - Use standard strength logging below</div>
+            <div style="padding:12px;background:#0a0f0d;border:1px solid #1e6a4f;margin-top:8px">
+              <div style="color:#9de8c5;margin-bottom:8px">Log this exercise in the <b>CHEST</b> or <b>BACK</b> section using standard sets × reps format.</div>
+              <div style="font-size:13px;color:#ccc">Tip: For ${exercise}, log weight, sets, reps, and RPE just like any other strength exercise.</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function updateStrongmanFields() {
+    const exercise = document.getElementById('strongmanExercise').value;
+    const box = document.getElementById('strongmanBox');
+    
+    if(!exercise) {
+      box.innerHTML = '';
+      return;
+    }
+    
+    // Implement work (reps/sets based)
+    if(['Tire Flip', 'Atlas Stone Lift', 'Log Press', 'Sandbag Shouldering'].includes(exercise)) {
+      box.innerHTML = `
+        <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Max effort implement work</div>
+        <div class="grid2">
+          <div><label>${exercise === 'Tire Flip' ? 'Tire Weight (estimate lb)' : exercise === 'Atlas Stone Lift' ? 'Stone Weight (lb)' : exercise === 'Log Press' ? 'Log Weight (lb)' : 'Sandbag Weight (lb)'}</label><input id="strongmanWeight" type="number" placeholder="${exercise === 'Tire Flip' ? '400' : exercise === 'Atlas Stone Lift' ? '200' : '120'}"></div>
+          <div><label>Sets</label><input id="strongmanSets" type="number" placeholder="${exercise === 'Tire Flip' ? '6' : '4'}"></div>
+          <div><label>Reps per Set</label><input id="strongmanReps" type="number" placeholder="${exercise === 'Tire Flip' ? '6' : exercise === 'Sandbag Shouldering' ? '8' : '3'}"></div>
+          <div><label>RPE (1-10)</label><input id="strongmanRPE" type="number" min="1" max="10" placeholder="9"></div>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:#0d1714;border:1px solid #00ffb3;color:#9de8c5;font-size:13px">
+          💡 <b>Tip:</b> ${exercise === 'Tire Flip' ? 'Drive through legs, push overhead at top' : exercise === 'Atlas Stone Lift' ? 'Bear hug low, explosive hip drive to platform' : exercise === 'Log Press' ? 'Clean to shoulders, powerful press overhead' : 'Ground to shoulder, alternate sides each rep'}
+        </div>
+      `;
+    }
+    // Sledgehammer work
+    else if(exercise === 'Sledgehammer Slam') {
+      box.innerHTML = `
+        <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Rotational power endurance</div>
+        <div class="grid2">
+          <div><label>Hammer Weight (lb)</label><input id="strongmanWeight" type="number" placeholder="16"></div>
+          <div><label>Sets</label><input id="strongmanSets" type="number" placeholder="5"></div>
+          <div><label>Slams per Set</label><input id="strongmanReps" type="number" placeholder="15"></div>
+          <div><label>RPE (1-10)</label><input id="strongmanRPE" type="number" min="1" max="10" placeholder="8"></div>
+          <div style="grid-column:span 2"><label>Technique</label><select id="strongmanTechnique"><option>Alternating sides</option><option>Right side only</option><option>Left side only</option></select></div>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:#0d1714;border:1px solid #00ffb3;color:#9de8c5;font-size:13px">
+          💡 <b>Tip:</b> Overhead slam with full hip rotation, let hammer bounce, alternate sides for balance
+        </div>
+      `;
+    }
+    // Loaded carries
+    else if(['Keg Carry', 'Tire Drag', 'Yoke Walk'].includes(exercise)) {
+      box.innerHTML = `
+        <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Heavy loaded carry</div>
+        <div class="grid2">
+          <div><label>${exercise === 'Yoke Walk' ? 'Total Weight on Yoke (lb)' : exercise === 'Keg Carry' ? 'Keg Weight (lb)' : 'Tire Weight (lb)'}</label><input id="strongmanWeight" type="number" placeholder="${exercise === 'Yoke Walk' ? '400' : exercise === 'Keg Carry' ? '150' : '200'}"></div>
+          <div><label>Sets/Runs</label><input id="strongmanSets" type="number" placeholder="4"></div>
+          <div><label>Distance per Set (m)</label><input id="strongmanDistance" type="number" placeholder="40"></div>
+          <div><label>Time per Set (s)</label><input id="strongmanTime" type="number" placeholder="20"></div>
+          <div style="grid-column:span 2"><label>RPE (1-10)</label><input id="strongmanRPE" type="number" min="1" max="10" placeholder="9"></div>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:#0d1714;border:1px solid #00ffb3;color:#9de8c5;font-size:13px">
+          💡 <b>Tip:</b> ${exercise === 'Yoke Walk' ? 'Stay upright, fast controlled walk, core tight' : exercise === 'Keg Carry' ? 'Bear hug carry, steady controlled pace' : 'Low stance, powerful drive, maintain speed'}
+        </div>
+      `;
+    }
+    // Heavy bag work
+    else if(['Heavy Bag Punches', 'Heavy Bag Kicks'].includes(exercise)) {
+      box.innerHTML = `
+        <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Max power striking</div>
+        <div class="grid2">
+          <div><label>Rounds</label><input id="strongmanSets" type="number" placeholder="6"></div>
+          <div><label>Duration per Round</label><input id="strongmanDuration" type="text" placeholder="3min" value="3min"></div>
+          <div><label>Rest Between</label><input id="strongmanRest" type="number" placeholder="60"></div>
+          <div><label>RPE (1-10)</label><input id="strongmanRPE" type="number" min="1" max="10" placeholder="8"></div>
+          <div style="grid-column:span 2"><label>Focus</label><select id="strongmanFocus"><option>Max power combos</option><option>Speed and volume</option><option>Technique drilling</option></select></div>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:#0d1714;border:1px solid #00ffb3;color:#9de8c5;font-size:13px">
+          💡 <b>Tip:</b> ${exercise === 'Heavy Bag Punches' ? 'Focus on power in every combo - 1-2, hooks, uppercuts' : 'Full power kicks both sides - low, mid, high'}
+        </div>
+      `;
+    }
+  }
+
 
   // ============================================
   // FIGHT CAMP MODE FUNCTIONS
@@ -1818,6 +2480,91 @@ ${prescription.summary}
     `;
     
     modal.classList.add('show');
+  }
+  
+  // AUTO-PROGRESSION: Calculate next workout based on performance + God-Mode
+  function calculateProgression(exerciseName, history, godModeStatus) {
+    if(!history || history.length === 0) return null;
+    
+    const lastWorkout = history[history.length - 1];
+    const prescribed = lastWorkout.prescribed;
+    const actual = lastWorkout.actual;
+    
+    if(!prescribed || !actual) return prescribed; // No comparison possible
+    
+    // Compare performance
+    const loadRatio = (actual.load || 0) / (prescribed.load || 1);
+    const rpeComparison = (actual.rpe || 8) - (prescribed.rpe || 8);
+    const completedRatio = (actual.sets || 0) / (prescribed.sets || 1);
+    
+    // Decision matrix based on God-Mode status
+    let loadMultiplier = 1.0;
+    
+    if(godModeStatus === 'GREEN') {
+      // All systems go - can progress
+      if(loadRatio >= 1.02 && rpeComparison <= 0 && completedRatio >= 1.0) {
+        loadMultiplier = 1.025; // Crushed it - big jump
+      } else if(loadRatio >= 0.98 && rpeComparison <= 1) {
+        loadMultiplier = 1.0125; // Completed as planned - small jump
+      } else if(loadRatio < 0.95 || rpeComparison > 2) {
+        loadMultiplier = 1.0; // Struggled - maintain
+      }
+    } else if(godModeStatus === 'YELLOW') {
+      // Caution - only increase if crushed
+      if(loadRatio >= 1.05 && rpeComparison <= -1) {
+        loadMultiplier = 1.0125;
+      } else {
+        loadMultiplier = 1.0; // Maintain
+      }
+    } else if(godModeStatus === 'RED') {
+      // Overtraining - reduce
+      loadMultiplier = 0.95;
+    }
+    
+    return {
+      sets: prescribed.sets,
+      reps: prescribed.reps,
+      load: Math.round((prescribed.load || 0) * loadMultiplier),
+      rpe: prescribed.rpe,
+      rir: prescribed.rir,
+      rest: prescribed.rest,
+      tempo: prescribed.tempo
+    };
+  }
+  
+  // Get God-Mode status (GREEN/YELLOW/RED)
+  function getGodModeStatus() {
+    const recentDays = Object.keys(store).sort().slice(-7);
+    let alerts = 0;
+    
+    // Calculate metrics
+    let avgCNS = 0;
+    let cnsCount = 0;
+    recentDays.forEach(key => {
+      const day = store[key];
+      if(day?.totalCNS) {
+        avgCNS += day.totalCNS;
+        cnsCount++;
+      }
+    });
+    avgCNS = cnsCount > 0 ? avgCNS / cnsCount : 0;
+    
+    const acwrData = calculateEWMA_ACWR();
+    const strainData = analyzeFosterStrain();
+    const sleepData = analyzeSleepPattern();
+    const rsiData = analyzeRSIDecline();
+    
+    // Count alerts
+    if(avgCNS > 75) alerts++;
+    if(acwrData.ratio > 1.45) alerts += 2; // Critical
+    if(acwrData.ratio > 1.30) alerts++;
+    if(strainData.highStrain) alerts++;
+    if(sleepData.hasAlert) alerts += 2; // Critical
+    if(rsiData.decline) alerts++;
+    
+    if(alerts === 0) return 'GREEN';
+    if(alerts <= 2) return 'YELLOW';
+    return 'RED';
   }
   
   // Show full week schedule
