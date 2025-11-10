@@ -169,16 +169,26 @@
                 <input id="fcTargetWeight" type="number" step="0.1" placeholder="e.g., 170">
               </div>
               <div style="grid-column:span 2">
-                <label>Camp Priority</label>
+                <label>Camp Priority (Order of Emphasis)</label>
                 <select id="fcPriority">
-                  <option value="">Choose focus...</option>
-                  <option value="Strength">Strength (Maximize 1RM gains)</option>
-                  <option value="Conditioning">Conditioning (CP/W′, VO2 max)</option>
-                  <option value="Power">Power/Speed (RSI, explosive work)</option>
-                  <option value="Technical">Technical Skills (Drilling, sparring)</option>
-                  <option value="Weight">Weight Management (Safe cut)</option>
+                  <option value="">Choose your priority order...</option>
                   <option value="Balanced">Balanced (All domains equally)</option>
+                  <option value="Strength,Conditioning,Power,Technical">Strength → Conditioning → Power → Technical</option>
+                  <option value="Strength,Power,Conditioning,Technical">Strength → Power → Conditioning → Technical</option>
+                  <option value="Strength,Technical,Conditioning,Power">Strength → Technical → Conditioning → Power</option>
+                  <option value="Conditioning,Strength,Power,Technical">Conditioning → Strength → Power → Technical</option>
+                  <option value="Conditioning,Power,Strength,Technical">Conditioning → Power → Strength → Technical</option>
+                  <option value="Conditioning,Technical,Strength,Power">Conditioning → Technical → Strength → Power</option>
+                  <option value="Power,Strength,Conditioning,Technical">Power → Strength → Conditioning → Technical</option>
+                  <option value="Power,Conditioning,Strength,Technical">Power → Conditioning → Strength → Technical</option>
+                  <option value="Power,Technical,Strength,Conditioning">Power → Technical → Strength → Conditioning</option>
+                  <option value="Technical,Strength,Conditioning,Power">Technical → Strength → Conditioning → Power</option>
+                  <option value="Technical,Conditioning,Strength,Power">Technical → Conditioning → Strength → Power</option>
+                  <option value="Technical,Power,Conditioning,Strength">Technical → Power → Conditioning → Strength</option>
                 </select>
+                <div style="font-size:11px;color:#9de8c5;margin-top:4px">
+                  ALL aspects will be trained, but in this order of emphasis for your specific fight
+                </div>
               </div>
               <div style="grid-column:span 2">
                 <label>Current Fitness Level</label>
@@ -201,10 +211,40 @@
         </div>
         
         <div class="sec" style="margin-top:12px">
-          <div class="hd">📅 Weekly Training Schedule</div>
+          <div class="hd">🥋 Your Skill Training Schedule</div>
           <div class="bd">
             <div class="note" style="margin-bottom:12px">
-              Define your weekly training structure. The AI will generate specific prescriptions for each session based on your camp goals and real-time fatigue data.
+              <b>STEP 1: Enter your SKILL training schedule below</b> (Boxing, BJJ, Wrestling, MMA, etc.)<br>
+              Fill in which days/times you train skills and the intensity level. Leave "Off" for slots with no skill training.
+            </div>
+            <div id="skillSchedule"></div>
+          </div>
+        </div>
+        
+        <div class="sec" style="margin-top:12px">
+          <div class="hd">💪 Auto-Generate Fitness Training</div>
+          <div class="bd">
+            <div class="note" style="margin-bottom:12px">
+              <b>STEP 2: After filling your skill training above, click below to auto-generate your FITNESS training</b><br>
+              The God-Mode algorithm will intelligently fill empty slots with Strength, Conditioning, Plyometrics, and Recovery based on your skill training load and intensity.
+            </div>
+            
+            <div style="margin-top:16px;text-align:center">
+              <button class="btn primary" onclick="autoGenerateFitnessTraining()" style="padding:16px 32px;font-size:16px;font-weight:700">
+                ⚡ AUTO-GENERATE FITNESS TRAINING
+              </button>
+              <div style="margin-top:8px;font-size:13px;color:#9de8c5">
+                AI analyzes your skill load and uses ACWR science to optimize fitness placement
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="sec" style="margin-top:12px">
+          <div class="hd">📅 Complete Weekly Training Schedule</div>
+          <div class="bd">
+            <div class="note" style="margin-bottom:12px">
+              Your complete training schedule (Skill + Fitness). After auto-generation, you can still manually adjust any session. The AI will generate specific prescriptions based on your camp goals and real-time fatigue data.
             </div>
             <div id="weeklySchedule"></div>
           </div>
@@ -1306,6 +1346,7 @@
     // Show Fight Camp fields only for Fight Camp mode
     if(sport === 'FIGHT CAMP' || forceShow) {
       fcFields.style.display = 'block';
+      buildSkillSchedule();
       buildWeeklySchedule();
     } else {
       fcFields.style.display = 'none';
@@ -1318,6 +1359,526 @@
     } else {
       baselineTests.style.display = 'none';
     }
+  }
+  
+  // ============================================
+  // AUTO-GENERATE OPTIMAL TRAINING SCHEDULE
+  // ============================================
+  function autoGenerateSchedule() {
+    const skillFreq = parseInt(document.getElementById('fcSkillFreq').value) || 0;
+    const skillIntensity = document.getElementById('fcSkillIntensity').value;
+    const skillType = document.getElementById('fcSkillType').value;
+    const priority = document.getElementById('fcPriority').value;
+    const fitness = parseInt(document.getElementById('fcFitness').value) || 5;
+    
+    // Validation
+    if(!skillFreq) {
+      alert('⚠️ Please select Skill Training Frequency first!');
+      return;
+    }
+    if(!skillIntensity) {
+      alert('⚠️ Please select Skill Training Intensity first!');
+      return;
+    }
+    if(!skillType) {
+      alert('⚠️ Please select Primary Skill Type first!');
+      return;
+    }
+    
+    // Map skill type to session names
+    const skillSessionName = {
+      'BJJ': 'BJJ/Grappling',
+      'Striking': 'Striking',
+      'MMA': 'MMA Sparring',
+      'Wrestling': 'BJJ/Grappling'
+    }[skillType];
+    
+    // Initialize schedule (7 days, AM/PM)
+    let schedule = [
+      {am: 'Off', pm: 'Off'}, // Mon
+      {am: 'Off', pm: 'Off'}, // Tue
+      {am: 'Off', pm: 'Off'}, // Wed
+      {am: 'Off', pm: 'Off'}, // Thu
+      {am: 'Off', pm: 'Off'}, // Fri
+      {am: 'Off', pm: 'Off'}, // Sat
+      {am: 'Off', pm: 'Off'}  // Sun
+    ];
+    
+    // ========================================
+    // STEP 1: PLACE SKILL TRAINING SESSIONS
+    // ========================================
+    
+    // Define optimal skill training days based on frequency
+    const skillDayPatterns = {
+      2: [1, 3],           // Tue, Thu
+      3: [0, 2, 4],        // Mon, Wed, Fri
+      4: [0, 2, 3, 5],     // Mon, Wed, Thu, Sat
+      5: [0, 1, 2, 3, 5],  // Mon, Tue, Wed, Thu, Sat
+      6: [0, 1, 2, 3, 4, 5], // Mon-Sat
+      7: [0, 1, 2, 3, 4, 5, 6] // Every day
+    };
+    
+    const skillDays = skillDayPatterns[skillFreq] || [];
+    
+    // Place skill sessions (typically PM for most athletes)
+    skillDays.forEach(dayIdx => {
+      schedule[dayIdx].pm = skillSessionName;
+    });
+    
+    // ========================================
+    // STEP 2: ADD STRENGTH TRAINING
+    // ========================================
+    
+    // Determine how many strength sessions per week based on frequency/intensity
+    let strengthSessionsNeeded = 0;
+    
+    if(skillFreq <= 3) {
+      strengthSessionsNeeded = 3; // More room for strength
+    } else if(skillFreq <= 5) {
+      strengthSessionsNeeded = 2; // Moderate strength
+    } else {
+      strengthSessionsNeeded = 1; // Minimal strength (high skill volume)
+    }
+    
+    // Adjust based on priority
+    if(priority === 'Strength') strengthSessionsNeeded = Math.min(strengthSessionsNeeded + 1, 4);
+    if(priority === 'Technical') strengthSessionsNeeded = Math.max(strengthSessionsNeeded - 1, 1);
+    
+    // Strength rotation: Upper → Lower → Full Body
+    const strengthTypes = ['Strength Upper', 'Strength Lower', 'Strength Full Body'];
+    let strengthIdx = 0;
+    let strengthPlaced = 0;
+    
+    // Place strength on non-skill days (AM preferred) or before skill (AM)
+    for(let i = 0; i < 7 && strengthPlaced < strengthSessionsNeeded; i++) {
+      if(schedule[i].am === 'Off') {
+        schedule[i].am = strengthTypes[strengthIdx % 3];
+        strengthIdx++;
+        strengthPlaced++;
+      }
+    }
+    
+    // ========================================
+    // STEP 3: ADD CONDITIONING (BIKE)
+    // ========================================
+    
+    let bikeSessionsNeeded = 0;
+    
+    if(priority === 'Conditioning') {
+      bikeSessionsNeeded = 2;
+    } else if(skillIntensity === 'Extreme') {
+      bikeSessionsNeeded = 1; // Less extra cardio if skill training is intense
+    } else {
+      bikeSessionsNeeded = 2; // Standard
+    }
+    
+    let bikePlaced = 0;
+    
+    // Place bike sessions on days without skill training (after strength if possible)
+    for(let i = 0; i < 7 && bikePlaced < bikeSessionsNeeded; i++) {
+      if(schedule[i].pm === 'Off' && schedule[i].am !== 'Off') {
+        schedule[i].pm = 'Conditioning (Bike)';
+        bikePlaced++;
+      }
+    }
+    
+    // If still need bike sessions, place in AM on skill days
+    for(let i = 0; i < 7 && bikePlaced < bikeSessionsNeeded; i++) {
+      if(schedule[i].am === 'Off' && schedule[i].pm !== 'Off') {
+        schedule[i].am = 'Conditioning (Bike)';
+        bikePlaced++;
+      }
+    }
+    
+    // ========================================
+    // STEP 4: ADD PLYOMETRICS/POWER
+    // ========================================
+    
+    let plyoSessionsNeeded = 0;
+    
+    if(priority === 'Power') {
+      plyoSessionsNeeded = 2;
+    } else if(skillFreq >= 6) {
+      plyoSessionsNeeded = 0; // Skip if training 6-7x/week
+    } else {
+      plyoSessionsNeeded = 1; // Standard
+    }
+    
+    let plyoPlaced = 0;
+    
+    // Place plyo on skill days BEFORE skill training (AM) for max power
+    for(let i = 0; i < 7 && plyoPlaced < plyoSessionsNeeded; i++) {
+      if(schedule[i].am === 'Off' && schedule[i].pm === skillSessionName) {
+        schedule[i].am = 'Track/Plyometrics';
+        plyoPlaced++;
+      }
+    }
+    
+    // ========================================
+    // STEP 5: ADD RECOVERY/OFF DAYS
+    // ========================================
+    
+    // Ensure at least 1 full off day per week (typically Sunday)
+    let hasFullOffDay = schedule.some(d => d.am === 'Off' && d.pm === 'Off');
+    
+    if(!hasFullOffDay) {
+      // Force Sunday to be full off
+      schedule[6] = {am: 'Off', pm: 'Off'};
+    }
+    
+    // Add active recovery on days with only 1 session
+    for(let i = 0; i < 7; i++) {
+      if(schedule[i].am === 'Off' && schedule[i].pm === 'Off' && i !== 6) {
+        // Add mobility/active recovery on partial off days (not Sunday)
+        schedule[i].am = 'Active Recovery';
+      }
+    }
+    
+    // ========================================
+    // STEP 6: ADJUST FOR INTENSITY
+    // ========================================
+    
+    if(skillIntensity === 'Extreme' || skillIntensity === 'High') {
+      // Reduce fitness volume if skill intensity is very high
+      for(let i = 0; i < 7; i++) {
+        // Remove double sessions on high-intensity skill days
+        if(schedule[i].pm === skillSessionName && schedule[i].am !== 'Off' && schedule[i].am !== 'Track/Plyometrics') {
+          schedule[i].am = 'Off';
+        }
+      }
+    }
+    
+    // ========================================
+    // STEP 7: ADJUST FOR FITNESS LEVEL
+    // ========================================
+    
+    if(fitness <= 3) {
+      // Low fitness = reduce volume
+      for(let i = 0; i < 7; i++) {
+        // Remove PM sessions that aren't skill training
+        if(schedule[i].pm !== 'Off' && schedule[i].pm !== skillSessionName) {
+          schedule[i].pm = 'Off';
+        }
+      }
+    }
+    
+    // ========================================
+    // APPLY TO UI
+    // ========================================
+    
+    schedule.forEach((day, idx) => {
+      const amEl = document.getElementById(`fcDay${idx}AM`);
+      const pmEl = document.getElementById(`fcDay${idx}PM`);
+      if(amEl) amEl.value = day.am;
+      if(pmEl) pmEl.value = day.pm;
+    });
+    
+    // Show success message
+    alert(`✅ SCHEDULE GENERATED!\n\nBased on:\n• ${skillFreq}x/week ${skillType}\n• ${skillIntensity} intensity\n• Priority: ${priority || 'Balanced'}\n• Fitness Level: ${fitness}/10\n\nYour optimal training schedule has been created!\nReview and adjust if needed, then Save Profile.`);
+  }
+  
+  // ============================================
+  // BUILD SKILL TRAINING SCHEDULE UI
+  // ============================================
+  function buildSkillSchedule() {
+    const container = document.getElementById('skillSchedule');
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const skillTypes = [
+      'Off',
+      'Boxing',
+      'Muay Thai',
+      'Kickboxing',
+      'BJJ/Grappling',
+      'Wrestling',
+      'Judo',
+      'MMA Sparring',
+      'Striking Sparring',
+      'Grappling Sparring',
+      'Technique Drilling'
+    ];
+    
+    let html = '<div style="display:grid;gap:10px">';
+    
+    days.forEach((day, idx) => {
+      html += `
+        <div style="background:#0d1714;padding:12px;border:1px solid #1e6a4f;border-radius:4px">
+          <div style="font-weight:700;color:#9de8c5;margin-bottom:10px">${day}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label style="font-size:11px;color:#ccc;display:block;margin-bottom:4px">AM Session</label>
+              <select id="skillDay${idx}AM" class="skillSchedule" style="width:100%;font-size:12px;margin-bottom:6px">
+                ${skillTypes.map(t => `<option value="${t}">${t}</option>`).join('')}
+              </select>
+              <div id="skillIntensity${idx}AM" style="display:none">
+                <label style="font-size:11px;color:#ccc;display:block;margin-bottom:4px">Intensity (1-10)</label>
+                <input type="number" min="1" max="10" id="skillInt${idx}AM" style="width:100%;font-size:12px" placeholder="1-10">
+              </div>
+            </div>
+            <div>
+              <label style="font-size:11px;color:#ccc;display:block;margin-bottom:4px">PM Session</label>
+              <select id="skillDay${idx}PM" class="skillSchedule" style="width:100%;font-size:12px;margin-bottom:6px">
+                ${skillTypes.map(t => `<option value="${t}">${t}</option>`).join('')}
+              </select>
+              <div id="skillIntensity${idx}PM" style="display:none">
+                <label style="font-size:11px;color:#ccc;display:block;margin-bottom:4px">Intensity (1-10)</label>
+                <input type="number" min="1" max="10" id="skillInt${idx}PM" style="width:100%;font-size:12px" placeholder="1-10">
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+    
+    // Add onchange listeners to show/hide intensity inputs
+    document.querySelectorAll('.skillSchedule').forEach(select => {
+      select.addEventListener('change', function() {
+        const id = this.id;
+        const intensityDiv = document.getElementById(id.replace('skillDay', 'skillIntensity'));
+        if(this.value !== 'Off') {
+          intensityDiv.style.display = 'block';
+        } else {
+          intensityDiv.style.display = 'none';
+        }
+      });
+    });
+  }
+  
+  // ============================================
+  // AUTO-GENERATE FITNESS TRAINING
+  // ============================================
+  function autoGenerateFitnessTraining() {
+    const priority = document.getElementById('fcPriority').value || 'Balanced';
+    const fitness = parseInt(document.getElementById('fcFitness').value) || 5;
+    
+    // STEP 1: Collect skill training schedule
+    const skillSchedule = [];
+    for(let i = 0; i < 7; i++) {
+      const amType = document.getElementById(`skillDay${i}AM`).value;
+      const pmType = document.getElementById(`skillDay${i}PM`).value;
+      const amIntensity = parseInt(document.getElementById(`skillInt${i}AM`)?.value) || 0;
+      const pmIntensity = parseInt(document.getElementById(`skillInt${i}PM`)?.value) || 0;
+      
+      skillSchedule.push({
+        am: {type: amType, intensity: amIntensity},
+        pm: {type: pmType, intensity: pmIntensity}
+      });
+    }
+    
+    // STEP 2: Validate that athlete entered at least some skill training
+    const hasSkillTraining = skillSchedule.some(day => 
+      day.am.type !== 'Off' || day.pm.type !== 'Off'
+    );
+    
+    if(!hasSkillTraining) {
+      alert('⚠️ Please enter your SKILL training schedule first!\n\nFill in at least one skill training session (Boxing, BJJ, etc.) with intensity level before generating fitness training.');
+      return;
+    }
+    
+    // STEP 3: Calculate total skill training load
+    let totalSkillLoad = 0;
+    let skillSessionCount = 0;
+    let highIntensityCount = 0;
+    
+    skillSchedule.forEach(day => {
+      if(day.am.type !== 'Off') {
+        totalSkillLoad += day.am.intensity;
+        skillSessionCount++;
+        if(day.am.intensity >= 8) highIntensityCount++;
+      }
+      if(day.pm.type !== 'Off') {
+        totalSkillLoad += day.pm.intensity;
+        skillSessionCount++;
+        if(day.pm.intensity >= 8) highIntensityCount++;
+      }
+    });
+    
+    const avgSkillIntensity = skillSessionCount > 0 ? totalSkillLoad / skillSessionCount : 0;
+    
+    // STEP 4: Determine fitness training allocation based on priority ORDER
+    // Priority format: "Strength,Conditioning,Power,Technical" or "Balanced"
+    
+    // Calculate how much fitness volume athlete can handle
+    let fitnessCapacity = 10 - skillSessionCount; // Simple model: 10 total sessions/week capacity
+    
+    // Adjust for intensity
+    if(avgSkillIntensity >= 8) {
+      fitnessCapacity = Math.max(2, fitnessCapacity - 2); // High intensity = less fitness capacity
+    } else if(avgSkillIntensity >= 6) {
+      fitnessCapacity = Math.max(3, fitnessCapacity - 1); // Moderate intensity
+    }
+    
+    // Adjust for fitness level
+    if(fitness <= 3) {
+      fitnessCapacity = Math.max(2, Math.floor(fitnessCapacity * 0.6)); // Low fitness = conservative
+    }
+    
+    // STEP 5: Allocate fitness sessions based on priority ORDER
+    let strengthSessions = 0;
+    let conditioningSessions = 0;
+    let plyoSessions = 0;
+    
+    if(priority === 'Balanced') {
+      // All equal weight
+      strengthSessions = Math.min(3, Math.ceil(fitnessCapacity * 0.4));
+      conditioningSessions = Math.min(2, Math.ceil(fitnessCapacity * 0.35));
+      plyoSessions = Math.min(2, Math.floor(fitnessCapacity * 0.25));
+    } else {
+      // Parse priority ordering: "Strength,Conditioning,Power,Technical"
+      const priorityOrder = priority.split(',');
+      
+      // Allocation percentages based on position
+      // 1st priority: 40%, 2nd: 30%, 3rd: 20%, 4th: 10%
+      const allocations = {
+        Strength: 0,
+        Conditioning: 0,
+        Power: 0,
+        Technical: 0 // Technical is handled by skill training mostly
+      };
+      
+      // Assign percentages based on order
+      if(priorityOrder[0]) allocations[priorityOrder[0]] = 0.40;
+      if(priorityOrder[1]) allocations[priorityOrder[1]] = 0.30;
+      if(priorityOrder[2]) allocations[priorityOrder[2]] = 0.20;
+      if(priorityOrder[3]) allocations[priorityOrder[3]] = 0.10;
+      
+      // Calculate session counts
+      strengthSessions = Math.min(4, Math.ceil(fitnessCapacity * allocations.Strength));
+      conditioningSessions = Math.min(3, Math.ceil(fitnessCapacity * allocations.Conditioning));
+      plyoSessions = Math.min(3, Math.ceil(fitnessCapacity * allocations.Power));
+      
+      // Ensure at least 1 of each if capacity allows and not 4th priority
+      if(fitnessCapacity >= 4) {
+        if(strengthSessions === 0 && allocations.Strength > 0.10) strengthSessions = 1;
+        if(conditioningSessions === 0 && allocations.Conditioning > 0.10) conditioningSessions = 1;
+        if(plyoSessions === 0 && allocations.Power > 0.10) plyoSessions = 1;
+      }
+    }
+    
+    // STEP 6: Place fitness training intelligently in empty slots
+    const fitnessSchedule = [];
+    for(let i = 0; i < 7; i++) {
+      fitnessSchedule.push({am: 'Off', pm: 'Off'});
+    }
+    
+    // Strength rotation
+    const strengthTypes = ['Strength Upper', 'Strength Lower', 'Strength Full Body'];
+    let strengthIdx = 0;
+    let strengthPlaced = 0;
+    
+    // PRIORITY 1: Place strength on empty days or opposite time from skill
+    for(let i = 0; i < 7 && strengthPlaced < strengthSessions; i++) {
+      const day = skillSchedule[i];
+      
+      // If full day is empty, place in AM
+      if(day.am.type === 'Off' && day.pm.type === 'Off') {
+        fitnessSchedule[i].am = strengthTypes[strengthIdx % 3];
+        strengthIdx++;
+        strengthPlaced++;
+      }
+      // If only AM has skill, place strength in PM (if skill isn't too intense)
+      else if(day.am.type !== 'Off' && day.pm.type === 'Off' && day.am.intensity < 9) {
+        fitnessSchedule[i].pm = strengthTypes[strengthIdx % 3];
+        strengthIdx++;
+        strengthPlaced++;
+      }
+      // If only PM has skill, place strength in AM (if skill isn't too intense)
+      else if(day.am.type === 'Off' && day.pm.type !== 'Off' && day.pm.intensity < 9) {
+        fitnessSchedule[i].am = strengthTypes[strengthIdx % 3];
+        strengthIdx++;
+        strengthPlaced++;
+      }
+    }
+    
+    // PRIORITY 2: Place conditioning on full off days or opposite skill
+    let conditioningPlaced = 0;
+    for(let i = 0; i < 7 && conditioningPlaced < conditioningSessions; i++) {
+      const day = skillSchedule[i];
+      
+      // If AM is empty and PM is either empty or has light skill
+      if(fitnessSchedule[i].am === 'Off' && day.am.type === 'Off') {
+        if(day.pm.type === 'Off' || day.pm.intensity < 7) {
+          fitnessSchedule[i].am = 'Conditioning (Bike)';
+          conditioningPlaced++;
+        }
+      }
+      // If PM is empty and AM has fitness or light skill
+      else if(fitnessSchedule[i].pm === 'Off' && day.pm.type === 'Off') {
+        if(day.am.intensity < 7 || fitnessSchedule[i].am !== 'Off') {
+          fitnessSchedule[i].pm = 'Conditioning (Bike)';
+          conditioningPlaced++;
+        }
+      }
+    }
+    
+    // PRIORITY 3: Place plyometrics BEFORE skill sessions (when fresh)
+    let plyoPlaced = 0;
+    for(let i = 0; i < 7 && plyoPlaced < plyoSessions; i++) {
+      const day = skillSchedule[i];
+      
+      // If PM has skill and AM is empty, place plyo in AM
+      if(day.pm.type !== 'Off' && day.am.type === 'Off' && fitnessSchedule[i].am === 'Off') {
+        // But only if skill intensity isn't extreme
+        if(day.pm.intensity < 9) {
+          fitnessSchedule[i].am = 'Track/Plyometrics';
+          plyoPlaced++;
+        }
+      }
+    }
+    
+    // STEP 7: Add active recovery on remaining slots (but not full days off)
+    for(let i = 0; i < 7; i++) {
+      const day = skillSchedule[i];
+      const fitnessDay = fitnessSchedule[i];
+      
+      // If it's not a full off day, add active recovery to empty slots
+      if(!(day.am.type === 'Off' && day.pm.type === 'Off' && fitnessDay.am === 'Off' && fitnessDay.pm === 'Off')) {
+        // Add active recovery to empty AM if PM has something
+        if(fitnessDay.am === 'Off' && day.am.type === 'Off' && (day.pm.type !== 'Off' || fitnessDay.pm !== 'Off')) {
+          // Only if it's not a high-intensity day
+          if(day.pm.intensity < 8) {
+            fitnessDay.am = 'Active Recovery';
+          }
+        }
+      }
+    }
+    
+    // Ensure at least one full rest day (usually Sunday)
+    let hasFullRest = false;
+    for(let i = 0; i < 7; i++) {
+      if(skillSchedule[i].am.type === 'Off' && skillSchedule[i].pm.type === 'Off' &&
+         fitnessSchedule[i].am === 'Off' && fitnessSchedule[i].pm === 'Off') {
+        hasFullRest = true;
+        break;
+      }
+    }
+    
+    if(!hasFullRest) {
+      // Force Sunday to be full rest
+      fitnessSchedule[6] = {am: 'Off', pm: 'Off'};
+    }
+    
+    // STEP 8: Apply to UI (merge skill + fitness)
+    for(let i = 0; i < 7; i++) {
+      const amEl = document.getElementById(`fcDay${i}AM`);
+      const pmEl = document.getElementById(`fcDay${i}PM`);
+      
+      if(amEl) {
+        // If skill training exists, use it; otherwise use fitness
+        amEl.value = skillSchedule[i].am.type !== 'Off' ? skillSchedule[i].am.type : fitnessSchedule[i].am;
+      }
+      
+      if(pmEl) {
+        // If skill training exists, use it; otherwise use fitness
+        pmEl.value = skillSchedule[i].pm.type !== 'Off' ? skillSchedule[i].pm.type : fitnessSchedule[i].pm;
+      }
+    }
+    
+    // Success message
+    const priorityDisplay = priority === 'Balanced' ? 'Balanced (All Equal)' : priority.replace(/,/g, ' → ');
+    alert(`✅ FITNESS TRAINING GENERATED!\n\nAnalysis:\n• ${skillSessionCount} skill sessions/week\n• Avg intensity: ${avgSkillIntensity.toFixed(1)}/10\n• ${highIntensityCount} high-intensity sessions\n\nGenerated:\n• ${strengthSessions} Strength sessions\n• ${conditioningSessions} Conditioning sessions\n• ${plyoSessions} Plyometric sessions\n\nPriority Order: ${priorityDisplay}\n(All aspects trained, weighted by position)\n\nReview complete schedule below and Save Profile when ready!`);
   }
   
   // FIGHT CAMP: Build weekly schedule UI
@@ -1377,6 +1938,9 @@
     document.getElementById('fcTargetWeight').value = fc.targetWeight || '';
     document.getElementById('fcPriority').value = fc.priority || '';
     document.getElementById('fcFitness').value = fc.fitness || '';
+    document.getElementById('fcSkillFreq').value = fc.skillFreq || '';
+    document.getElementById('fcSkillIntensity').value = fc.skillIntensity || '';
+    document.getElementById('fcSkillType').value = fc.skillType || '';
     
     // Load schedule
     if(fc.schedule) {
@@ -1385,6 +1949,27 @@
         const pmEl = document.getElementById(`fcDay${idx}PM`);
         if(amEl) amEl.value = day.am || 'Off';
         if(pmEl) pmEl.value = day.pm || 'Off';
+      });
+    }
+    
+    // Load skill schedule
+    if(fc.skillSchedule) {
+      fc.skillSchedule.forEach((day, idx) => {
+        const amTypeEl = document.getElementById(`skillDay${idx}AM`);
+        const pmTypeEl = document.getElementById(`skillDay${idx}PM`);
+        const amIntEl = document.getElementById(`skillInt${idx}AM`);
+        const pmIntEl = document.getElementById(`skillInt${idx}PM`);
+        const amIntDiv = document.getElementById(`skillIntensity${idx}AM`);
+        const pmIntDiv = document.getElementById(`skillIntensity${idx}PM`);
+        
+        if(amTypeEl) amTypeEl.value = day.am.type || 'Off';
+        if(pmTypeEl) pmTypeEl.value = day.pm.type || 'Off';
+        if(amIntEl) amIntEl.value = day.am.intensity || '';
+        if(pmIntEl) pmIntEl.value = day.pm.intensity || '';
+        
+        // Show/hide intensity inputs
+        if(amIntDiv) amIntDiv.style.display = (day.am.type !== 'Off') ? 'block' : 'none';
+        if(pmIntDiv) pmIntDiv.style.display = (day.pm.type !== 'Off') ? 'block' : 'none';
       });
     }
   }
@@ -1432,10 +2017,23 @@
     // FIGHT CAMP: Save fight camp data
     if(p.sport === 'FIGHT CAMP') {
       const schedule = [];
+      const skillSchedule = [];
+      
       for(let i = 0; i < 7; i++) {
         schedule.push({
           am: document.getElementById(`fcDay${i}AM`)?.value || 'Off',
           pm: document.getElementById(`fcDay${i}PM`)?.value || 'Off'
+        });
+        
+        skillSchedule.push({
+          am: {
+            type: document.getElementById(`skillDay${i}AM`)?.value || 'Off',
+            intensity: fmt(document.getElementById(`skillInt${i}AM`)?.value) || 0
+          },
+          pm: {
+            type: document.getElementById(`skillDay${i}PM`)?.value || 'Off',
+            intensity: fmt(document.getElementById(`skillInt${i}PM`)?.value) || 0
+          }
         });
       }
       
@@ -1446,6 +2044,10 @@
         targetWeight: fmt(document.getElementById('fcTargetWeight')?.value),
         priority: document.getElementById('fcPriority')?.value,
         fitness: fmt(document.getElementById('fcFitness')?.value),
+        skillFreq: fmt(document.getElementById('fcSkillFreq')?.value),
+        skillIntensity: document.getElementById('fcSkillIntensity')?.value,
+        skillType: document.getElementById('fcSkillType')?.value,
+        skillSchedule,
         schedule,
         startDate: Date.now() // Track when camp started
       };
