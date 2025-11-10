@@ -101,6 +101,7 @@
       <div class="row">
         <button class="btn" id="profileBtn">👤 Profile</button>
         <button class="btn primary" id="weeklyBtn">📊 Weekly Analysis</button>
+        <button class="btn" id="periodBtn">📈 Periodization (LP1-LP4)</button>
       </div>
     </div>
 
@@ -143,6 +144,12 @@
       <div class="note" style="margin-top:10px">
         <b>Max HR Auto-Calculation:</b> Uses Tanaka formula (2001): <b>208 - (0.7 × age)</b> - the most accurate research-validated formula for adults. Leave Max HR blank for auto-calculation, or enter a value to override (e.g., from a VO2 max test).<br><br>
         <b>Sport Focus Impact:</b> Your sport focus adjusts TSS/CNS calculations and provides weekly training recommendations. For example, "Hybrid" requires balanced work across Strength, Power, Endurance, Skill, and Recovery domains. Weekly Analysis will show which domains you've covered and what's missing.<br><br>
+        <b>UFC PI CNS Modality Weighting:</b> CNS calculations use scientific modality weights:<br>
+        • Max Effort Strength = 1.0 (highest neural demand)<br>
+        • Assault Bike Zone 5 = 0.95 (anaerobic stress)<br>
+        • BJJ Live Rolling = 0.85 (sport-specific fatigue)<br>
+        • Plyometrics = 0.75 (elastic/tendon stress)<br>
+        • Zone 2 / Walking = 0.35 (low CNS, aerobic)<br><br>
         Saves HR zones (5-zone model, %Max + Karvonen if RHR provided). Zones appear as chips under toolbar.
       </div>
       <div class="row" style="margin-top:10px;justify-content:flex-end">
@@ -240,9 +247,22 @@
             • Enter number of sets and reps per set<br>
             • For unilateral: enter R Leg and L Leg reps separately<br>
             <br>
-            <b>Examples:</b><br>
-            • Broad Jump: Bilateral, 4 sets, 34 reps per set<br>
-            • Single Leg Stair Jump: Unilateral, 4 sets, R Leg: 21, L Leg: 21<br>
+            <b>Surface Type Impact on Tendon Load:</b><br>
+            • <b>Turf (0.9×)</b> - Softer, reduced impact stress<br>
+            • <b>Track (1.1×)</b> - Standard surface (default)<br>
+            • <b>Concrete (1.4×)</b> - Hard surface, maximum impact stress<br>
+            <br>
+            <b>UFC PI Tendon Load System (Impact Coefficients):</b><br>
+            • Low Impact Bounding = 0.6× (gentle elastic work)<br>
+            • Jump Rope / Fast Contacts = 0.8× (moderate impact)<br>
+            • Box Jumps / Drop Landing = 1.2× (higher eccentric load)<br>
+            • Depth Jumps / Stadium Stairs = 1.5×+ (maximum tendon stress)<br>
+            <br>
+            <b>Tendon Load Safety Zones:</b><br>
+            • 60-120 contacts/week = Base conditioning<br>
+            • 120-200 = Power development<br>
+            • 200-350 = High elastic training<br>
+            • >350 = Injury risk zone (deload required)<br>
             <br>
             <b>RPE (Rate of Perceived Exertion):</b><br>
             • 1-3: Easy/Warmup | 4-6: Moderate | 7-8: Hard | 9-10: Max Effort<br>
@@ -258,6 +278,14 @@
               <select id="trkAch">
                 <option value="">Choose...</option>
                 <option>Fresh</option><option>Tight</option><option>Sore</option>
+              </select>
+            </div>
+            <div>
+              <label>Surface Type</label>
+              <select id="trkSurface">
+                <option value="track">Track (1.0×)</option>
+                <option value="turf">Turf (0.9×)</option>
+                <option value="concrete">Concrete (1.4×)</option>
               </select>
             </div>
           </div>
@@ -436,6 +464,16 @@
         <button class="btn" onclick="closeWeek()">✕ Close</button>
       </div>
       <div id="weekBody" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="periodModal">
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <div class="pill">📈 Periodization (LP1-LP4)</div>
+        <button class="btn" onclick="closePeriod()">✕ Close</button>
+      </div>
+      <div id="periodBody" style="margin-top:10px"></div>
     </div>
   </div>
 
@@ -674,16 +712,61 @@
       return name && sets.length?{name,sets}:null;
     }).filter(Boolean);
     if(!exercises.length) return null;
+    
     let vol=0, rpeSum=0, rpeCnt=0;
-    exercises.forEach(ex=>ex.sets.forEach(s=>{vol+=s.w*s.r; if(s.rpe){rpeSum+=s.rpe; rpeCnt++}}));
-    const avgRPE=rpeCnt? rpeSum/rpeCnt : 0;
+    let est1RMs = [];
+    let hypertrophyStimulus = 0;
+    let neuralLoad = 0;
+    
+    exercises.forEach(ex => {
+      ex.sets.forEach(s => {
+        vol += s.w * s.r;
+        
+        if(s.rpe) {
+          rpeSum += s.rpe;
+          rpeCnt++;
+          
+          // Calculate 1RM using Epley formula via RIR
+          const RIR = 10 - s.rpe;
+          const loadPct = 100 - (RIR * 4);
+          const est1RM = s.w / (Math.max(loadPct, 30) / 100);
+          est1RMs.push(est1RM);
+          
+          // Hypertrophy stimulus = volume × intensity
+          hypertrophyStimulus += (s.w * s.r) * (s.rpe / 10);
+          
+          // Neural load = load% × RPE × sets
+          neuralLoad += (loadPct / 100) * s.rpe;
+        }
+      });
+    });
+    
+    const avgRPE = rpeCnt ? rpeSum / rpeCnt : 0;
+    const avg1RM = est1RMs.length ? Math.round(est1RMs.reduce((a,b)=>a+b,0) / est1RMs.length) : 0;
+    
     let cns=40 + (avgRPE>=9?15:avgRPE>=8.5?10:avgRPE<=7?-8:0);
+    
+    // Apply UFC PI modality weighting
+    cns = applyModalityWeight(cns, 'strength'); // Max Effort Strength = 1.0
+    
     const tss = Math.round(60 * (avgRPE/10) * 100);
-    return {exercises, volume:vol, cnsScore:clamp(cns,0,100), tss};
+    
+    return {
+      exercises, 
+      volume: vol, 
+      avgRPE,
+      est1RM: avg1RM,
+      hypertrophyStimulus: Math.round(hypertrophyStimulus),
+      neuralLoad: Math.round(neuralLoad),
+      cnsScore: clamp(cns,0,100), 
+      tss
+    };
   }
 
   function resetTrack(){
     trkSleep.value=''; trkAch.value='';
+    const surfaceEl = document.getElementById('trkSurface');
+    if(surfaceEl) surfaceEl.value = 'track';
     document.getElementById('trkPrev').innerHTML='No image';
     document.getElementById('trackExercises').innerHTML='';
     document.querySelectorAll('.warmupCheck').forEach(cb => cb.checked = false);
@@ -711,6 +794,8 @@
     resetTrack();
     if(!d) return;
     trkSleep.value=d.sleep||''; trkAch.value=d.ach||'';
+    const surfaceEl = document.getElementById('trkSurface');
+    if(surfaceEl && d.surface) surfaceEl.value = d.surface;
     
     if(d.warmupChecks) {
       const checks = document.querySelectorAll('.warmupCheck');
@@ -839,27 +924,51 @@
     
     if(!exercises.length) return null;
     
+    // Get surface type
+    const surface = document.getElementById('trkSurface')?.value || 'track';
+    const surfaceFactor = { turf: 0.9, track: 1.1, concrete: 1.4 }[surface] || 1.1;
+    
+    // Get Achilles state
+    const achState = trkAch.value || 'Fresh';
+    const tendonFactor = { Fresh: 1.0, Tight: 1.2, Sore: 1.5 }[achState] || 1.0;
+    
+    // Calculate tendon load with impact coefficients AND surface/tendon factors (UFC PI)
+    let tendonLoad = 0;
+    exercises.forEach(ex => {
+      const impactCoef = getImpactCoefficient(ex.name);
+      tendonLoad += ex.totalReps * impactCoef * surfaceFactor * tendonFactor;
+    });
+    
     const totalContacts = exercises.reduce((sum, ex) => sum + ex.totalReps, 0);
     const avgRPE = exercises.filter(ex=>ex.rpe>0).reduce((s,ex)=>s+ex.rpe,0) / exercises.filter(ex=>ex.rpe>0).length || 0;
     
     let cns=35 + (fmt(trkSleep.value)<7?12:0) + (trkAch.value==='Sore'?25:trkAch.value==='Tight'?12:0);
-    if(totalContacts>350) cns+=15;
+    if(tendonLoad>350) cns+=15; // Use tendon load instead of raw contacts
     if(avgRPE>=9) cns+=20;
     else if(avgRPE>=8) cns+=12;
     else if(avgRPE>=7) cns+=8;
     
-    const tss = Math.round(60 + totalContacts*0.12 + (avgRPE*5));
+    // Apply UFC PI modality weighting
+    cns = applyModalityWeight(cns, 'plyo'); // Plyometrics = 0.75
+    
+    const tss = Math.round(60 + tendonLoad*0.12 + (avgRPE*5));
     const hr={avg:fmt(trkAvgHR.value),peak:fmt(trkPeakHR.value),z5:fmt(trkZ5.value),z4:fmt(trkZ4.value)};
+    
+    // Add HR Zone TSS if available
+    const hrTSS = calculateHRZoneTSS(hr);
+    const finalTSS = hrTSS > 0 ? Math.round((tss + hrTSS) / 2) : tss;
     
     return {
       sleep:fmt(trkSleep.value), 
-      ach:trkAch.value, 
+      ach:trkAch.value,
+      surface,
       warmupChecks, 
       exercises,
-      contacts:totalContacts, 
+      contacts:totalContacts,
+      tendonLoad: Math.round(tendonLoad),
       avgRPE, 
       cnsScore:clamp(cns,0,100), 
-      tss, 
+      tss: finalTSS, 
       hr
     };
   }
@@ -1298,6 +1407,9 @@
       tss = Math.round( (totalWorkSec/60)*90 + (z5Sec/60)*4 );
       if(z5Sec/60>15) cns+=15;
       
+      // Apply UFC PI modality weighting - C2 is Zone 5 work
+      cns = applyModalityWeight(cns, 'bike_z5'); // Zone-5 Chaser = 0.95
+      
       const totalCals = rd.reduce((s,r)=>s+(r.cals||0),0);
       const avgWatts = rd.filter(r=>r.watts).length > 0 ? Math.round(rd.reduce((s,r)=>s+(r.watts||0),0)/rd.filter(r=>r.watts).length) : 0;
       const totalTime = fmt(document.getElementById('bikeTotalTime')?.value);
@@ -1308,6 +1420,19 @@
       const avgMax = rd.length? Math.round(rd.reduce((a,b)=>a+b.rpmMax,0)/rd.length) : 0;
       tss = Math.round(rounds*(fmt(bikeWork.value)/60)*90);
       if(rounds>=10) cns+=15;
+      
+      // Determine if protocol is Zone 5 work or Zone 2
+      const targetHR = fmt(bikeTarget.value);
+      const isZone5 = targetHR >= 85 || proto.includes('z5') || proto.includes('tabata') || proto.includes('peak') || proto.includes('ngannou');
+      const isZone2 = proto === 'steady' || targetHR < 75;
+      
+      if(isZone5) {
+        cns = applyModalityWeight(cns, 'bike_z5'); // Zone 5 = 0.95
+      } else if(isZone2) {
+        cns = applyModalityWeight(cns, 'zone2'); // Zone 2 = 0.35
+      } else {
+        cns = applyModalityWeight(cns, 'bike_z5'); // Default to higher
+      }
       
       const totalCals = rd.reduce((s,r)=>s+(r.cals||0),0);
       const avgWatts = rd.filter(r=>r.watts).length > 0 ? Math.round(rd.reduce((s,r)=>s+(r.watts||0),0)/rd.filter(r=>r.watts).length) : 0;
@@ -1325,6 +1450,10 @@
     const time=fmt(bjjTime.value); if(!time) return null;
     const sweat=fmt(bjjW1.value)-fmt(bjjW2.value);
     let cns=40+(sweat>=4?20:sweat>=3?10:0)+(bjjInt.value==='High'?15:0)+(bjjFeel.value==='Beat'?20:bjjFeel.value==='Tired'?12:0)+(fmt(bjjSleep.value)<7?10:0);
+    
+    // Apply UFC PI modality weighting
+    cns = applyModalityWeight(cns, 'bjj'); // BJJ Live Rolling = 0.85
+    
     const tss=Math.round(time*1.5+(bjjInt.value==='High'?30:0));
     return {time,intensity:bjjInt.value,w1:fmt(bjjW1.value),w2:fmt(bjjW2.value),feel:bjjFeel.value,sleep:fmt(bjjSleep.value),cnsScore:clamp(cns,0,100),tss};
   }
@@ -1332,7 +1461,13 @@
   function hydrateWalk(d){resetWalk(); if(!d) return; wDur.value=d.dur||''; wDist.value=d.dist||''; wPace.value=d.pace||''; wTer.value=d.ter||'Flat'; wPur.value=d.pur||'Recovery';}
   function collectWalk(){
     if(!document.getElementById('mWalk').checked) return null;
-    const dur=fmt(wDur.value); const tss=Math.round(dur*0.5); let cns=10+(wTer.value==='Steep'?15:wTer.value==='Hills'?8:0);
+    const dur=fmt(wDur.value); 
+    const tss=Math.round(dur*0.5); 
+    let cns=10+(wTer.value==='Steep'?15:wTer.value==='Hills'?8:0);
+    
+    // Apply UFC PI modality weighting - Walking is recovery/Zone 2
+    cns = applyModalityWeight(cns, 'zone2'); // Zone 2 = 0.35
+    
     return {dur,dist:fmt(wDist.value),pace:fmt(wPace.value),ter:wTer.value,pur:wPur.value,cnsScore:clamp(cns,0,100),tss};
   }
 
@@ -1340,6 +1475,59 @@
     const box=document.getElementById(targetId);
     const f=input.files?.[0]; if(!f){box.textContent='No image';return}
     const reader=new FileReader(); reader.onload=()=>{box.innerHTML=`<img src="${reader.result}" alt="preview">`}; reader.readAsDataURL(f);
+  }
+  
+  // UFC PI MODALITY WEIGHTING SYSTEM
+  function applyModalityWeight(rawCNS, modality) {
+    const weights = {
+      strength: 1.0,    // Max Effort Strength = 1.0
+      bike_z5: 0.95,    // Assault Bike Zone-5 Chaser = 0.95
+      bjj: 0.85,        // BJJ Live Rolling = 0.85
+      plyo: 0.75,       // Plyometrics (High Contacts) = 0.75
+      zone2: 0.35       // Long Zone 2 = 0.35
+    };
+    return Math.round(rawCNS * (weights[modality] || 1.0));
+  }
+  
+  // UFC PI HR ZONE WEIGHTING FOR TSS
+  function calculateHRZoneTSS(hrData) {
+    if(!hrData || (!hrData.z5 && !hrData.z4)) return 0;
+    
+    const zoneWeights = {
+      z1: 1.0,
+      z2: 1.5,
+      z3: 2.0,
+      z4: 3.0,
+      z5: 4.5
+    };
+    
+    let tss = 0;
+    // Minutes in Zone 5
+    if(hrData.z5) tss += hrData.z5 * zoneWeights.z5;
+    // Minutes in Zone 4
+    if(hrData.z4) tss += hrData.z4 * zoneWeights.z4;
+    
+    return Math.round(tss);
+  }
+  
+  // IMPACT COEFFICIENT FOR PLYOMETRICS
+  function getImpactCoefficient(exerciseName) {
+    const name = exerciseName.toLowerCase();
+    
+    // Depth Jumps / Stadium Stairs Explosive = 1.5+
+    if(name.includes('depth') || name.includes('stair')) return 1.5;
+    
+    // Box Jumps / Drop Landing = 1.2
+    if(name.includes('box') || name.includes('drop')) return 1.2;
+    
+    // Jump Rope / Fast Contacts = 0.8
+    if(name.includes('rope') || name.includes('skip')) return 0.8;
+    
+    // Low Impact Bounding = 0.6
+    if(name.includes('bound')) return 0.6;
+    
+    // Default = 1.0
+    return 1.0;
   }
 
   function saveDay(){
@@ -1372,7 +1560,183 @@
   }
 
   const weekModal=document.getElementById('weekModal');
+  // UFC PI PRESCRIPTION ENGINE
+  function generateTrainingPrescription(acwr, avgCNS, tendonLoad, z5Minutes) {
+    let prescription = '';
+    let color = '';
+    let action = '';
+    
+    // Convert ACWR string to number
+    const acwrNum = parseFloat(acwr);
+    
+    // UFC PI Decision Logic
+    if(acwrNum > 1.7) {
+      // HIGH BREAKDOWN RISK
+      action = 'DELOAD';
+      color = '#ff6b6b';
+      prescription = `<div style="background:#2b1515;border-left:4px solid ${color};padding:12px;margin-top:12px">
+        <div style="color:${color};font-weight:700;font-size:16px;margin-bottom:8px">🔴 ${action} - Immediate Deload Required</div>
+        <div style="color:#ccc">ACWR > 1.7 = High injury/breakdown risk</div>
+        <div style="margin-top:8px"><b>Next Week:</b></div>
+        <div>• Reduce volume by 30-40%</div>
+        <div>• Reduce intensity (no max effort work)</div>
+        <div>• Add extra sleep + recovery days</div>
+        <div>• Focus on Zone 2 aerobic work only</div>
+      </div>`;
+    }
+    else if(acwrNum >= 1.31 && acwrNum <= 1.7) {
+      // ELEVATED INJURY RISK
+      action = 'REDUCE VOLUME';
+      color = '#ffbb33';
+      prescription = `<div style="background:#2b2415;border-left:4px solid ${color};padding:12px;margin-top:12px">
+        <div style="color:${color};font-weight:700;font-size:16px;margin-bottom:8px">⚠️ ${action} - Do Not Increase Load</div>
+        <div style="color:#ccc">ACWR 1.31-1.7 = Elevated injury risk</div>
+        <div style="margin-top:8px"><b>Next Week:</b></div>
+        <div>• Reduce volume by 15-20%</div>
+        <div>• Maintain intensity (quality over quantity)</div>
+        <div>• Add 1 extra recovery day</div>
+        <div>• Monitor CNS and tendon load closely</div>
+      </div>`;
+    }
+    else if(acwrNum >= 1.0 && acwrNum <= 1.3 && avgCNS >= 75) {
+      // MAINTAIN BUT CNS HIGH
+      action = 'MAINTAIN (CNS Watch)';
+      color = '#ffbb33';
+      prescription = `<div style="background:#2b2415;border-left:4px solid ${color};padding:12px;margin-top:12px">
+        <div style="color:${color};font-weight:700;font-size:16px;margin-bottom:8px">⚠️ ${action}</div>
+        <div style="color:#ccc">ACWR safe but CNS fatigue elevated (${avgCNS})</div>
+        <div style="margin-top:8px"><b>Next Week:</b></div>
+        <div>• Maintain current volume</div>
+        <div>• Reduce high-CNS work (max effort, Zone 5)</div>
+        <div>• Add Zone 2 aerobic base work</div>
+        <div>• Prioritize sleep and recovery</div>
+      </div>`;
+    }
+    else if(acwrNum >= 1.0 && acwrNum <= 1.3) {
+      // OPTIMAL TRAINING ZONE
+      action = 'MAINTAIN';
+      color = '#00ffb3';
+      prescription = `<div style="background:#0d1f1a;border-left:4px solid ${color};padding:12px;margin-top:12px">
+        <div style="color:${color};font-weight:700;font-size:16px;margin-bottom:8px">✓ ${action} - Optimal Adaptation Zone</div>
+        <div style="color:#ccc">ACWR 0.8-1.3 = Safe training zone</div>
+        <div style="margin-top:8px"><b>Next Week:</b></div>
+        <div>• Continue current training dose</div>
+        <div>• Optimal adaptation occurring</div>
+        <div>• Monitor for any CNS or tendon warning signs</div>
+        <div>• Ready for intensity or volume increase if desired</div>
+      </div>`;
+    }
+    else if(acwrNum < 1.0 && avgCNS < 60) {
+      // READY TO PUSH
+      action = 'PUSH';
+      color = '#00ffb3';
+      prescription = `<div style="background:#0d1f1a;border-left:4px solid ${color};padding:12px;margin-top:12px">
+        <div style="color:${color};font-weight:700;font-size:16px;margin-bottom:8px">🚀 ${action} - Ready for Load Increase</div>
+        <div style="color:#ccc">ACWR < 1.0 AND Low CNS = Adaptation capacity available</div>
+        <div style="margin-top:8px"><b>Next Week:</b></div>
+        <div>• Add intensity (Max Effort / Zone 5 work)</div>
+        <div>• OR add volume (10-15% increase)</div>
+        <div>• Consider adding explosive/power work</div>
+        <div>• System ready for progressive overload</div>
+      </div>`;
+    }
+    else {
+      // DEFAULT MAINTAIN
+      action = 'MAINTAIN';
+      color = '#00ffb3';
+      prescription = `<div style="background:#0d1f1a;border-left:4px solid ${color};padding:12px;margin-top:12px">
+        <div style="color:${color};font-weight:700;font-size:16px;margin-bottom:8px">✓ ${action}</div>
+        <div style="color:#ccc">Continue current training approach</div>
+      </div>`;
+    }
+    
+    // Add tendon load warning if needed
+    if(tendonLoad > 350) {
+      prescription += `<div style="background:#2b1515;border:1px solid #ff6b6b;padding:10px;margin-top:8px">
+        <div style="color:#ff6b6b;font-weight:600">⚠️ Tendon Load Warning</div>
+        <div style="color:#ccc;margin-top:4px">Weekly tendon load: ${tendonLoad} contacts (>350 = elevated risk)</div>
+        <div style="margin-top:4px">• Reduce plyometric volume next week</div>
+        <div>• Add tendon recovery work (isometrics, light eccentric)</div>
+      </div>`;
+    }
+    
+    return prescription;
+  }
+  
   function closeWeek(){weekModal.classList.remove('show')}
+  
+  const periodModal=document.getElementById('periodModal');
+  function closePeriod(){periodModal.classList.remove('show')}
+  
+  // LP1-LP4 PERIODIZATION BLOCKS
+  function calculatePeriodization(est1RM) {
+    const blocks = {
+      LP1: { pct: 0.78, reps: 5, sets: 5, name: 'Volume Strength', desc: 'Build work capacity and muscle mass' },
+      LP2: { pct: 0.85, reps: 3, sets: 5, name: 'Neural Strength', desc: 'Increase force production' },
+      LP3: { pct: 0.92, reps: 2, sets: 4, name: 'Max Effort Peaking', desc: 'Peak strength expression' },
+      LP4: { pct: 0.70, reps: 3, sets: 3, name: 'Deload Recovery', desc: 'Active recovery and restoration' }
+    };
+    
+    let html = '<div class="note" style="margin-bottom:12px"><b>Westside-style periodization based on your estimated 1RM.</b><br>Progress through LP1→LP2→LP3, then deload with LP4 before starting next cycle.</div>';
+    
+    Object.keys(blocks).forEach(key => {
+      const block = blocks[key];
+      const targetWeight = Math.round(est1RM * block.pct);
+      
+      html += `
+        <div class="sec" style="margin-top:10px;background:#0d1714;border:1px solid #1e6a4f">
+          <div class="hd" style="background:#0f1b17;border-bottom:1px solid #1e6a4f;color:#9de8c5">${key}: ${block.name}</div>
+          <div class="bd">
+            <div style="color:#ccc;margin-bottom:10px;font-style:italic">${block.desc}</div>
+            <div class="grid2">
+              <div class="kpi" style="border-left-color:#00ffb3"><div class="muted">Target Weight</div><div class="v">${targetWeight} lb</div></div>
+              <div class="kpi"><div class="muted">% of 1RM</div><div class="v">${Math.round(block.pct*100)}%</div></div>
+              <div class="kpi"><div class="muted">Reps per Set</div><div class="v">${block.reps}</div></div>
+              <div class="kpi"><div class="muted">Total Sets</div><div class="v">${block.sets}</div></div>
+            </div>
+            <div style="margin-top:8px;color:#9de8c5;font-size:13px">
+              <b>Total Volume:</b> ${targetWeight * block.reps * block.sets} lb
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    return html;
+  }
+  
+  document.getElementById('periodBtn').onclick=()=>{
+    let maxEst1RM = 0;
+    let foundData = false;
+    
+    Object.keys(store).sort().reverse().slice(0, 14).forEach(key => {
+      const day = store[key];
+      if(day?.modalities) {
+        ['chest', 'back', 'legs'].forEach(mod => {
+          if(day.modalities[mod]?.est1RM && day.modalities[mod].est1RM > maxEst1RM) {
+            maxEst1RM = day.modalities[mod].est1RM;
+            foundData = true;
+          }
+        });
+      }
+    });
+    
+    if(!foundData || maxEst1RM === 0) {
+      document.getElementById('periodBody').innerHTML = `
+        <div class="note">No strength data found with RPE values. Complete at least one strength session with RPE tracking to see periodization recommendations.</div>
+      `;
+    } else {
+      document.getElementById('periodBody').innerHTML = `
+        <div style="background:#0d1f1a;padding:12px;border:2px solid #00ffb3;border-radius:4px;margin-bottom:12px">
+          <div style="color:#00ffb3;font-weight:700;font-size:16px">Estimated 1RM: ${maxEst1RM} lb</div>
+          <div style="color:#ccc;margin-top:4px">Calculated from recent training with RPE data</div>
+        </div>
+        ${calculatePeriodization(maxEst1RM)}
+      `;
+    }
+    
+    periodModal.classList.add('show');
+  };
   
   function getAdjustmentFactors(sportFocus, modalities) {
     // Default: no adjustment
@@ -1459,6 +1823,8 @@
   document.getElementById('weeklyBtn').onclick=()=>{
     const end=new Date(); const start=new Date(); start.setDate(start.getDate()-6);
     let totalCNS=0,totalVOL=0,totalTSS=0,days=0; const dailyCNS=[];
+    let weeklyTendonLoad = 0; // Track tendon load
+    let weeklyZ5Minutes = 0; // Track Zone 5 time
     
     // Track which modalities were done this week
     const modalitiesDone = {
@@ -1485,10 +1851,24 @@
           if(day.modalities.chest) modalitiesDone.chest = true;
           if(day.modalities.back) modalitiesDone.back = true;
           if(day.modalities.legs) modalitiesDone.legs = true;
-          if(day.modalities.track) modalitiesDone.track = true;
-          if(day.modalities.bike) modalitiesDone.bike = true;
+          if(day.modalities.track) {
+            modalitiesDone.track = true;
+            // Track tendon load
+            if(day.modalities.track.tendonLoad) {
+              weeklyTendonLoad += day.modalities.track.tendonLoad;
+            }
+          }
+          if(day.modalities.bike) {
+            modalitiesDone.bike = true;
+            // Track Zone 5 time if C2 protocol
+            if(day.modalities.bike.proto === 'c2' && day.modalities.bike.roundData) {
+              day.modalities.bike.roundData.forEach(r => {
+                if(r.tZ5) weeklyZ5Minutes += (r.tRep - r.tZ5) / 60;
+              });
+            }
+          }
           if(day.modalities.bjj) modalitiesDone.bjj = true;
-          if(day.modalities.walk) modalitiesDone.walk = true;
+          if(day.modalities.walking) modalitiesDone.walk = true;
         }
       }
     }
@@ -1506,6 +1886,9 @@
     // Generate recommendations based on sport focus and modalities done
     let recommendations = generateRecommendations(sportFocus, modalitiesDone);
     
+    // Generate UFC PI prescription
+    let prescription = generateTrainingPrescription(ac, avgCNS, weeklyTendonLoad, weeklyZ5Minutes);
+    
     document.getElementById('weekBody').innerHTML=`
       <div class="grid2">
         <div class="kpi"><div class="muted">Total Volume (lb)</div><div class="v">${totalVOL.toLocaleString()}</div></div>
@@ -1514,6 +1897,10 @@
         <div class="kpi" style="border-left-color:${warn?'#ff6b6b':'#00ffb3'}"><div class="muted">Acute:Chronic</div><div class="v" style="color:${warn?'#ff6b6b':'#00ffb3'}">${ac}</div></div>
         <div class="kpi"><div class="muted">Monotony</div><div class="v">${mono}</div></div>
       </div>
+      ${weeklyTendonLoad > 0 ? `<div style="margin-top:12px;padding:8px;background:#0d1714;border:1px solid #1e6a4f;border-radius:4px">
+        <b>Weekly Tendon Load:</b> ${weeklyTendonLoad} contacts ${weeklyTendonLoad > 350 ? '<span style="color:#ffbb33">(Elevated)</span>' : '<span style="color:#00ffb3">(Safe)</span>'}
+      </div>` : ''}
+      ${prescription}
       ${warn?`<div class="sec" style="margin-top:12px"><div class="bd"><div class="danger"><b>Injury-risk warning:</b> reduce next-week volume 15–20%, add 1–2 rest days, emphasize sleep & nutrition.</div></div></div>`:''}
       ${recommendations ? `<div class="sec" style="margin-top:12px"><div class="hd">📋 Training Balance ${sportFocus ? `(${sportFocus})` : ''}</div><div class="bd">${recommendations}</div></div>` : ''}
     `;
