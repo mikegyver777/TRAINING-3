@@ -2924,7 +2924,7 @@ ${prescription.summary}
   // GOD-MODE VOLUME ADJUSTMENT HELPER
   // ============================================
   function getGodModeVolumeAdjustments() {
-    const profile = getProfile();
+    const profile = LS.get('elite_profile', {});
     if(!profile || !profile.fightCamp) {
       return {
         forceRestDay: false,
