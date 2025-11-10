@@ -776,6 +776,9 @@
       <div class="sec" id="secBike" style="display:none">
         <div class="hd">🚴 Assault Bike Lab</div>
         <div class="bd">
+          <!-- GOD-MODE WARNINGS -->
+          <div id="bikeGodModeWarnings"></div>
+          
           <div class="grid2">
             <div>
               <label>Protocol</label>
@@ -874,6 +877,9 @@
       <div class="sec" id="secBJJ" style="display:none">
         <div class="hd">🥋 BJJ</div>
         <div class="bd grid2">
+          <!-- GOD-MODE WARNINGS -->
+          <div id="bjjGodModeWarnings" style="grid-column:span 2"></div>
+          
           <div><label>Spar time (min)</label><input id="bjjTime" type="number" placeholder="45"></div>
           <div><label>Intensity</label>
             <select id="bjjInt">
@@ -902,6 +908,9 @@
       <div class="sec" id="secWalk" style="display:none">
         <div class="hd">🚶 Walking / Recovery</div>
         <div class="bd grid2">
+          <!-- GOD-MODE WARNINGS -->
+          <div id="walkGodModeWarnings" style="grid-column:span 2"></div>
+          
           <div><label>Duration (min)</label><input id="wDur" type="number"></div>
           <div><label>Distance (mi)</label><input id="wDist" type="number" step="0.01"></div>
           <div><label>Pace (min/mi)</label><input id="wPace" type="number" step="0.1"></div>
@@ -1525,7 +1534,138 @@
     }
   }
   function closeDay(){dayModal.classList.remove('show')}
-  function toggleSection(id){const el=document.getElementById(id); el.style.display=(el.style.display==='none'?'block':'none')}
+  function toggleSection(id){
+    const el=document.getElementById(id); 
+    el.style.display=(el.style.display==='none'?'block':'none');
+    
+    // GOD-MODE: Populate warnings when sections open
+    if(el.style.display === 'block') {
+      const godMode = getGodModeVolumeAdjustments();
+      
+      // BIKE SECTION
+      if(id === 'secBike') {
+        const warningDiv = document.getElementById('bikeGodModeWarnings');
+        
+        if(godMode.forceRestDay) {
+          warningDiv.innerHTML = `
+            <div style="background:#ff6b6b;color:#fff;padding:24px;text-align:center;border-radius:8px;margin-bottom:16px">
+              <h2 style="margin:0 0 12px 0;font-size:24px">🚨 MANDATORY REST DAY</h2>
+              <div style="font-size:18px;margin-bottom:16px;font-weight:700">God-Mode Status: CRITICAL OVERTRAINING</div>
+              <div style="font-size:14px;line-height:1.6;margin-bottom:12px">
+                <strong>Multiple Fatigue Markers Elevated:</strong><br>
+                ${godMode.alert || 'ACWR >1.5, CNS >75, or Poor Sleep'}
+              </div>
+              <div style="font-size:14px;line-height:1.6;background:rgba(0,0,0,0.2);padding:12px;border-radius:6px">
+                <strong>RECOMMENDATION:</strong> No high-intensity cardio today.<br>
+                Consider light Zone 2 walking only or complete rest.
+              </div>
+            </div>`;
+          
+          // Disable bike inputs
+          document.getElementById('bikeProto').disabled = true;
+          document.getElementById('bikeRounds').disabled = true;
+          return;
+        }
+        
+        let warnings = '';
+        if(godMode.setReduction > 0) {
+          const currentRounds = parseInt(document.getElementById('bikeRounds').value) || 6;
+          const adjustedRounds = Math.max(2, currentRounds - godMode.setReduction);
+          document.getElementById('bikeRounds').value = adjustedRounds;
+          
+          warnings += `
+            <div style="background:#ffbb33;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+              ⚠️ GOD-MODE: Reduced rounds from ${currentRounds} to ${adjustedRounds} due to ${godMode.alert || 'fatigue markers'}
+            </div>`;
+        }
+        
+        if(godMode.intensityMod < 0.95) {
+          warnings += `
+            <div style="background:#ffbb33;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+              ⚠️ GOD-MODE: Reduce intensity - avoid max RPM sprints today
+            </div>`;
+        }
+        
+        if(godMode.intensityMod > 1.0) {
+          warnings += `
+            <div style="background:#00ffb3;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+              ✓ GOD-MODE: OPTIMAL - You can push hard today! All markers excellent.
+            </div>`;
+        }
+        
+        warningDiv.innerHTML = warnings;
+      }
+      
+      // BJJ SECTION
+      if(id === 'secBJJ') {
+        const warningDiv = document.getElementById('bjjGodModeWarnings');
+        if(!warningDiv) return; // Skip if div doesn't exist yet
+        
+        if(godMode.forceRestDay) {
+          warningDiv.innerHTML = `
+            <div style="background:#ff6b6b;color:#fff;padding:24px;text-align:center;border-radius:8px;margin-bottom:16px">
+              <h2 style="margin:0 0 12px 0;font-size:24px">🚨 MANDATORY REST DAY</h2>
+              <div style="font-size:18px;margin-bottom:16px;font-weight:700">God-Mode Status: CRITICAL OVERTRAINING</div>
+              <div style="font-size:14px;line-height:1.6;margin-bottom:12px">
+                <strong>Multiple Fatigue Markers Elevated</strong><br>
+                ${godMode.alert || 'High injury risk detected'}
+              </div>
+              <div style="font-size:14px;line-height:1.6;background:rgba(0,0,0,0.2);padding:12px;border-radius:6px">
+                <strong>RECOMMENDATION:</strong> Skip BJJ today. Risk of injury too high.<br>
+                Light drilling/technique only if you must train.
+              </div>
+            </div>`;
+          
+          document.getElementById('bjjTime').disabled = true;
+          document.getElementById('bjjInt').disabled = true;
+          return;
+        }
+        
+        let warnings = '';
+        if(godMode.setReduction > 0) {
+          warnings += `
+            <div style="background:#ffbb33;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+              ⚠️ GOD-MODE: Consider reducing spar time by ${godMode.setReduction * 10} minutes today
+            </div>`;
+        }
+        
+        if(godMode.intensityMod < 0.95) {
+          warnings += `
+            <div style="background:#ffbb33;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+              ⚠️ GOD-MODE: Focus on light technical drilling instead of hard sparring today
+            </div>`;
+        }
+        
+        if(godMode.intensityMod > 1.0) {
+          warnings += `
+            <div style="background:#00ffb3;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+              ✓ GOD-MODE: OPTIMAL - You can push hard in sparring today!
+            </div>`;
+        }
+        
+        warningDiv.innerHTML = warnings;
+      }
+      
+      // WALKING SECTION
+      if(id === 'secWalk') {
+        const warningDiv = document.getElementById('walkGodModeWarnings');
+        if(!warningDiv) return; // Skip if div doesn't exist yet
+        
+        // Walking is ALWAYS encouraged, even on rest days
+        if(godMode.forceRestDay) {
+          warningDiv.innerHTML = `
+            <div style="background:#00ffb3;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+              ✓ PERFECT CHOICE: Walking is ideal active recovery on a rest day. Excellent decision!
+            </div>`;
+        } else {
+          warningDiv.innerHTML = `
+            <div style="background:#00ffb3;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+              ✓ Walking is ALWAYS beneficial for recovery - great choice!
+            </div>`;
+        }
+      }
+    }
+  }
 
   // ============================================
   // EXERCISE-SPECIFIC FIELD UPDATES
@@ -1687,14 +1827,56 @@
     
     box.style.display = 'block';
     
+    // GET GOD-MODE VOLUME ADJUSTMENTS
+    const godMode = getGodModeVolumeAdjustments();
+    
+    // IF FORCE REST DAY - BLOCK PLYOMETRIC/POWER TRAINING
+    if(godMode.forceRestDay) {
+      box.innerHTML=`
+        <div style="background:#ff6b6b;color:#fff;padding:24px;text-align:center;border-radius:8px">
+          <h2 style="margin:0 0 12px 0;font-size:24px">🚨 MANDATORY REST DAY</h2>
+          <div style="font-size:18px;margin-bottom:16px;font-weight:700">God-Mode Status: CRITICAL OVERTRAINING</div>
+          <div style="font-size:14px;line-height:1.6;margin-bottom:12px">
+            <strong>Multiple Fatigue Markers Elevated:</strong><br>
+            ${godMode.alert || 'ACWR >1.5, CNS >75, or Poor Sleep Pattern Detected'}
+          </div>
+          <div style="font-size:14px;line-height:1.6;background:rgba(0,0,0,0.2);padding:12px;border-radius:6px">
+            <strong>RECOMMENDATION:</strong> No plyometrics or explosive work today.<br>
+            High CNS demand + current fatigue state = injury risk.<br>
+            Take complete rest or light walking only.
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    // BUILD WARNING BANNERS
+    let warnings = '';
+    
+    if(godMode.setReduction > 0) {
+      warnings += `
+        <div style="background:#ffbb33;color:#0a0f0d;padding:10px;margin-bottom:8px;border-radius:6px;font-weight:600;font-size:13px">
+          ⚠️ GOD-MODE: Reducing jumps/sets by ${godMode.setReduction} today due to ${godMode.alert || 'fatigue'}
+        </div>`;
+    }
+    
+    if(godMode.intensityMod < 0.95) {
+      warnings += `
+        <div style="background:#ffbb33;color:#0a0f0d;padding:10px;margin-bottom:8px;border-radius:6px;font-weight:600;font-size:13px">
+          ⚠️ GOD-MODE: Reduce intensity - avoid max effort jumps today
+        </div>`;
+    }
+    
     // Horizontal jumps
     if(['Broad Jump', 'Bounding', 'Lateral Bounds'].includes(exercise)) {
+      const defaultJumps = Math.max(5, (exercise === 'Bounding' ? 4 : 15) - godMode.setReduction * 3);
       box.innerHTML = `
+        ${warnings}
         <div class="sec" style="background:#0d1714;border:2px solid #00ffb3">
           <div class="hd" style="background:#00ffb3;color:#0a0f0d">${exercise} - Horizontal Power</div>
           <div class="bd">
             <div class="grid2">
-              <div><label>${exercise === 'Bounding' ? 'Sets' : 'Total Jumps'}</label><input id="trackJumps" type="number" placeholder="${exercise === 'Bounding' ? '4' : '15'}"></div>
+              <div><label>${exercise === 'Bounding' ? 'Sets' : 'Total Jumps'}</label><input id="trackJumps" type="number" placeholder="${defaultJumps}"></div>
               <div><label>${exercise === 'Bounding' ? 'Distance per Set (yd)' : 'Best Distance (ft)'}</label><input id="trackDistance" type="number" step="0.1" placeholder="${exercise === 'Bounding' ? '30' : '8.5'}"></div>
               <div><label>Landing Quality</label><select id="trackLanding"><option>Soft & controlled</option><option>Some stumble</option><option>Hard/unstable</option></select></div>
               <div><label>RPE (1-10)</label><input id="trackRPE" type="number" min="1" max="10" placeholder="7"></div>
@@ -1705,12 +1887,14 @@
     }
     // Vertical jumps
     else if(['Box Jump', 'Hurdle Hops', 'Tuck Jumps', 'Split Jump', 'Box Jump to Sprint'].includes(exercise)) {
+      const defaultJumps = Math.max(5, 15 - godMode.setReduction * 3);
       box.innerHTML = `
+        ${warnings}
         <div class="sec" style="background:#0d1714;border:2px solid #00ffb3">
           <div class="hd" style="background:#00ffb3;color:#0a0f0d">${exercise} - Vertical Power</div>
           <div class="bd">
             <div class="grid2">
-              <div><label>Total Jumps</label><input id="trackJumps" type="number" placeholder="15"></div>
+              <div><label>Total Jumps</label><input id="trackJumps" type="number" placeholder="${defaultJumps}"></div>
               <div><label>${exercise === 'Box Jump' || exercise === 'Box Jump to Sprint' ? 'Box Height (in)' : exercise === 'Hurdle Hops' ? 'Hurdle Height (in)' : 'Flight Quality'}</label>${exercise === 'Box Jump' || exercise === 'Box Jump to Sprint' || exercise === 'Hurdle Hops' ? `<input id="trackHeight" type="number" placeholder="30">` : `<select id="trackQuality"><option>Explosive & high</option><option>Moderate</option><option>Low/sluggish</option></select>`}</div>
               <div><label>Landing Quality</label><select id="trackLanding"><option>Soft & controlled</option><option>Some stumble</option><option>Hard/unstable</option></select></div>
               <div><label>RPE (1-10)</label><input id="trackRPE" type="number" min="1" max="10" placeholder="7"></div>
@@ -1721,14 +1905,27 @@
     }
     // Reactive/Advanced
     else if(['Depth Jump', 'Drop Landing'].includes(exercise)) {
+      const defaultReps = Math.max(5, (exercise === 'Depth Jump' ? 12 : 10) - godMode.setReduction * 2);
+      
+      // EXTRA WARNING if doing Depth Jumps with fatigue
+      let depthJumpWarning = '';
+      if(exercise === 'Depth Jump' && godMode.intensityMod < 0.95) {
+        depthJumpWarning = `
+          <div style="background:#ff6b6b;color:#fff;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:700">
+            🚨 WARNING: Depth Jumps are extremely CNS-demanding. Current fatigue markers suggest SKIPPING this exercise today.
+          </div>`;
+      }
+      
       box.innerHTML = `
+        ${warnings}
+        ${depthJumpWarning}
         <div class="sec" style="background:#0d1714;border:2px solid #ff6b6b">
           <div class="hd" style="background:#ff6b6b;color:#fff">⚠️ ${exercise} - ADVANCED (High CNS)</div>
           <div class="bd">
             <div class="note" style="color:#ff6b6b;font-weight:700;margin-bottom:12px">⚠️ ${exercise === 'Depth Jump' ? 'LP3 ONLY - Max reactive strength. Use only when peaked.' : 'Eccentric absorption drill - Focus on landing mechanics.'}</div>
             <div class="grid2">
               <div><label>Drop Height (in)</label><input id="trackHeight" type="number" placeholder="${exercise === 'Depth Jump' ? '18' : '12'}"></div>
-              <div><label>Total Reps</label><input id="trackReps" type="number" placeholder="${exercise === 'Depth Jump' ? '12' : '10'}"></div>
+              <div><label>Total Reps</label><input id="trackReps" type="number" placeholder="${defaultReps}"></div>
               <div><label>Contact Time</label><select id="trackContact"><option>Instant (<0.2s)</option><option>Quick (0.2-0.3s)</option><option>Slow (>0.3s)</option></select></div>
               <div><label>RPE (1-10)</label><input id="trackRPE" type="number" min="1" max="10" placeholder="9"></div>
             </div>
@@ -1738,12 +1935,14 @@
     }
     // Lateral
     else if(exercise === 'Lateral Skater Hops') {
+      const defaultSets = Math.max(2, 4 - godMode.setReduction);
       box.innerHTML = `
+        ${warnings}
         <div class="sec" style="background:#0d1714;border:2px solid #00ffb3">
           <div class="hd" style="background:#00ffb3;color:#0a0f0d">${exercise} - Lateral Power</div>
           <div class="bd">
             <div class="grid2">
-              <div><label>Sets</label><input id="trackSets" type="number" placeholder="4"></div>
+              <div><label>Sets</label><input id="trackSets" type="number" placeholder="${defaultSets}"></div>
               <div><label>Reps per Set</label><input id="trackReps" type="number" placeholder="8"></div>
               <div><label>Quality</label><select id="trackQuality"><option>Explosive & quick</option><option>Moderate</option><option>Slow/sluggish</option></select></div>
               <div><label>RPE (1-10)</label><input id="trackRPE" type="number" min="1" max="10" placeholder="7"></div>
@@ -1754,12 +1953,14 @@
     }
     // Elastic/Spring
     else if(['Pogo Hops', 'Single-Leg Hop'].includes(exercise)) {
+      const defaultSets = Math.max(2, 4 - godMode.setReduction);
       box.innerHTML = `
+        ${warnings}
         <div class="sec" style="background:#0d1714;border:2px solid #00ffb3">
           <div class="hd" style="background:#00ffb3;color:#0a0f0d">${exercise} - Elastic/Reactive</div>
           <div class="bd">
             <div class="grid2">
-              <div><label>Sets</label><input id="trackSets" type="number" placeholder="4"></div>
+              <div><label>Sets</label><input id="trackSets" type="number" placeholder="${defaultSets}"></div>
               <div><label>Reps per Set</label><input id="trackReps" type="number" placeholder="${exercise === 'Pogo Hops' ? '15' : '8'}"></div>
               <div><label>Ground Contact</label><select id="trackContact"><option>Instant/Springy</option><option>Quick</option><option>Slow</option></select></div>
               <div><label>RPE (1-10)</label><input id="trackRPE" type="number" min="1" max="10" placeholder="7"></div>
@@ -1771,13 +1972,15 @@
     // Rotational Power (Med Ball throws)
     else if(['Med Ball Rotational Throw', 'Med Ball Shotput', 'Med Ball Overhead Slam', 'Med Ball Scoop Toss'].includes(exercise)) {
       const needsSides = exercise === 'Med Ball Rotational Throw' || exercise === 'Med Ball Shotput';
+      const defaultThrows = Math.max(5, (needsSides ? 8 : 15) - godMode.setReduction * 2);
       box.innerHTML = `
+        ${warnings}
         <div class="sec" style="background:#0d1714;border:2px solid #00ffb3">
           <div class="hd" style="background:#00ffb3;color:#0a0f0d">${exercise} - Rotational Power</div>
           <div class="bd">
             <div class="grid2">
               <div><label>Ball Weight (lb)</label><input id="trackBallWeight" type="number" placeholder="10"></div>
-              <div><label>${needsSides ? 'Throws per Side' : 'Total Throws'}</label><input id="trackThrows" type="number" placeholder="${needsSides ? '8' : '15'}"></div>
+              <div><label>${needsSides ? 'Throws per Side' : 'Total Throws'}</label><input id="trackThrows" type="number" placeholder="${defaultThrows}"></div>
               ${needsSides ? `
                 <div><label>Right Side Distance (ft)</label><input id="trackDistanceR" type="number" step="0.1" placeholder="10.5"></div>
                 <div><label>Left Side Distance (ft)</label><input id="trackDistanceL" type="number" step="0.1" placeholder="9.8"></div>
@@ -1849,13 +2052,55 @@
       return;
     }
     
+    // GET GOD-MODE VOLUME ADJUSTMENTS
+    const godMode = getGodModeVolumeAdjustments();
+    
+    // IF FORCE REST DAY - BLOCK TRAINING
+    if(godMode.forceRestDay) {
+      box.innerHTML=`
+        <div style="background:#ff6b6b;color:#fff;padding:24px;text-align:center;border-radius:8px">
+          <h2 style="margin:0 0 12px 0;font-size:24px">🚨 MANDATORY REST DAY</h2>
+          <div style="font-size:18px;margin-bottom:16px;font-weight:700">God-Mode Status: CRITICAL OVERTRAINING</div>
+          <div style="font-size:14px;line-height:1.6;margin-bottom:12px">
+            <strong>Multiple Fatigue Markers Elevated:</strong><br>
+            ${godMode.alert || 'ACWR >1.5, CNS >75, or Poor Sleep Pattern Detected'}
+          </div>
+          <div style="font-size:14px;line-height:1.6;background:rgba(0,0,0,0.2);padding:12px;border-radius:6px">
+            <strong>RECOMMENDATION:</strong> Take complete rest day. No strongman training today.<br>
+            Training will increase injury risk and delay recovery.
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    // BUILD WARNING BANNERS
+    let warnings = '';
+    
+    if(godMode.setReduction > 0) {
+      warnings += `
+        <div style="background:#ffbb33;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+          ⚠️ GOD-MODE: Reduce sets by ${godMode.setReduction} today due to ${godMode.alert || 'fatigue'}
+        </div>`;
+    }
+    
+    if(godMode.intensityMod < 1.0) {
+      const percentReduction = Math.round((1 - godMode.intensityMod) * 100);
+      warnings += `
+        <div style="background:#ffbb33;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+          ⚠️ GOD-MODE: Reduce loads ${percentReduction}% today (x${godMode.intensityMod})
+        </div>`;
+    }
+    
     // Implement work (reps/sets based)
     if(['Tire Flip', 'Atlas Stone Lift', 'Log Press', 'Sandbag Shouldering'].includes(exercise)) {
+      const defaultSets = Math.max(2, (exercise === 'Tire Flip' ? 6 : 4) - godMode.setReduction);
       box.innerHTML = `
+        ${warnings}
         <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Max effort implement work</div>
         <div class="grid2">
-          <div><label>${exercise === 'Tire Flip' ? 'Tire Weight (estimate lb)' : exercise === 'Atlas Stone Lift' ? 'Stone Weight (lb)' : exercise === 'Log Press' ? 'Log Weight (lb)' : 'Sandbag Weight (lb)'}</label><input id="strongmanWeight" type="number" placeholder="${exercise === 'Tire Flip' ? '400' : exercise === 'Atlas Stone Lift' ? '200' : '120'}"></div>
-          <div><label>Sets</label><input id="strongmanSets" type="number" placeholder="${exercise === 'Tire Flip' ? '6' : '4'}"></div>
+          <div><label>${exercise === 'Tire Flip' ? 'Tire Weight (estimate lb)' : exercise === 'Atlas Stone Lift' ? 'Stone Weight (lb)' : exercise === 'Log Press' ? 'Log Weight (lb)' : 'Sandbag Weight (lb)'}</label><input id="strongmanWeight" type="number" placeholder="${exercise === 'Tire Flip' ? Math.round(400*godMode.intensityMod) : exercise === 'Atlas Stone Lift' ? Math.round(200*godMode.intensityMod) : Math.round(120*godMode.intensityMod)}"></div>
+          <div><label>Sets</label><input id="strongmanSets" type="number" placeholder="${defaultSets}"></div>
           <div><label>Reps per Set</label><input id="strongmanReps" type="number" placeholder="${exercise === 'Tire Flip' ? '6' : exercise === 'Sandbag Shouldering' ? '8' : '3'}"></div>
           <div><label>RPE (1-10)</label><input id="strongmanRPE" type="number" min="1" max="10" placeholder="9"></div>
         </div>
@@ -1866,11 +2111,13 @@
     }
     // Sledgehammer work
     else if(exercise === 'Sledgehammer Slam') {
+      const defaultSets = Math.max(2, 5 - godMode.setReduction);
       box.innerHTML = `
+        ${warnings}
         <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Rotational power endurance</div>
         <div class="grid2">
           <div><label>Hammer Weight (lb)</label><input id="strongmanWeight" type="number" placeholder="16"></div>
-          <div><label>Sets</label><input id="strongmanSets" type="number" placeholder="5"></div>
+          <div><label>Sets</label><input id="strongmanSets" type="number" placeholder="${defaultSets}"></div>
           <div><label>Slams per Set</label><input id="strongmanReps" type="number" placeholder="15"></div>
           <div><label>RPE (1-10)</label><input id="strongmanRPE" type="number" min="1" max="10" placeholder="8"></div>
           <div style="grid-column:span 2"><label>Technique</label><select id="strongmanTechnique"><option>Alternating sides</option><option>Right side only</option><option>Left side only</option></select></div>
@@ -1882,11 +2129,13 @@
     }
     // Loaded carries
     else if(['Keg Carry', 'Tire Drag', 'Yoke Walk'].includes(exercise)) {
+      const defaultSets = Math.max(2, 4 - godMode.setReduction);
       box.innerHTML = `
+        ${warnings}
         <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Heavy loaded carry</div>
         <div class="grid2">
-          <div><label>${exercise === 'Yoke Walk' ? 'Total Weight on Yoke (lb)' : exercise === 'Keg Carry' ? 'Keg Weight (lb)' : 'Tire Weight (lb)'}</label><input id="strongmanWeight" type="number" placeholder="${exercise === 'Yoke Walk' ? '400' : exercise === 'Keg Carry' ? '150' : '200'}"></div>
-          <div><label>Sets/Runs</label><input id="strongmanSets" type="number" placeholder="4"></div>
+          <div><label>${exercise === 'Yoke Walk' ? 'Total Weight on Yoke (lb)' : exercise === 'Keg Carry' ? 'Keg Weight (lb)' : 'Tire Weight (lb)'}</label><input id="strongmanWeight" type="number" placeholder="${exercise === 'Yoke Walk' ? Math.round(400*godMode.intensityMod) : exercise === 'Keg Carry' ? Math.round(150*godMode.intensityMod) : Math.round(200*godMode.intensityMod)}"></div>
+          <div><label>Sets/Runs</label><input id="strongmanSets" type="number" placeholder="${defaultSets}"></div>
           <div><label>Distance per Set (m)</label><input id="strongmanDistance" type="number" placeholder="40"></div>
           <div><label>Time per Set (s)</label><input id="strongmanTime" type="number" placeholder="20"></div>
           <div style="grid-column:span 2"><label>RPE (1-10)</label><input id="strongmanRPE" type="number" min="1" max="10" placeholder="9"></div>
@@ -1898,10 +2147,12 @@
     }
     // Heavy bag work
     else if(['Heavy Bag Punches', 'Heavy Bag Kicks'].includes(exercise)) {
+      const defaultRounds = Math.max(2, 6 - godMode.setReduction);
       box.innerHTML = `
+        ${warnings}
         <div class="note" style="margin-bottom:12px"><b>${exercise}</b> - Max power striking</div>
         <div class="grid2">
-          <div><label>Rounds</label><input id="strongmanSets" type="number" placeholder="6"></div>
+          <div><label>Rounds</label><input id="strongmanSets" type="number" placeholder="${defaultRounds}"></div>
           <div><label>Duration per Round</label><input id="strongmanDuration" type="text" placeholder="3min" value="3min"></div>
           <div><label>Rest Between</label><input id="strongmanRest" type="number" placeholder="60"></div>
           <div><label>RPE (1-10)</label><input id="strongmanRPE" type="number" min="1" max="10" placeholder="8"></div>
@@ -2249,7 +2500,7 @@
   // Get daily recommendation: PUSH / MAINTAIN / REDUCE / RECOVER
   function getDailyRecommendation(profile, avgCNS, todayData) {
     const fc = profile.fightCamp;
-    if(!fc) return {status: 'MAINTAIN', color: '#9de8c5', message: ''};
+    if(!fc) return {status: 'MAINTAIN', color: '#9de8c5', message: '', volumeAdjustments: {setReduction: 0, exerciseLimit: 99, intensityMod: 1.0, forceRestDay: false}};
     
     // Get recent metrics
     const recentDays = Object.keys(store).sort().slice(-7);
@@ -2263,6 +2514,12 @@
     let alert = '';
     let message = '';
     let score = 0; // Positive = push, negative = reduce
+    
+    // GOD-MODE VOLUME ARCHITECTURE ADJUSTMENTS
+    let setReduction = 0;        // Number of sets to remove per exercise
+    let exerciseLimit = 99;       // Max exercises to prescribe
+    let intensityMod = 1.0;       // Intensity multiplier
+    let forceRestDay = false;     // Should athlete take rest day?
     
     // FACTOR 1: CNS Status
     if(avgCNS > 75) {
@@ -2326,26 +2583,96 @@
       score -= 1; // Light taper
     }
     
-    // DETERMINE STATUS
+    // ========================================
+    // GOD-MODE VOLUME ARCHITECTURE ADJUSTMENTS
+    // Based on science: ACWR, CNS, Sleep, Strain
+    // ========================================
+    
     if(score <= -4) {
+      // CRITICAL OVERTRAINING - RECOVER
       status = 'RECOVER';
       color = '#ff6b6b';
-      message += 'Take rest day or light active recovery only.';
+      message = '🚨 CRITICAL: Multiple fatigue markers elevated. ';
+      
+      // SCIENCE: When ACWR >1.5 + poor sleep + high CNS = drastically reduce volume
+      forceRestDay = true;  // Should take rest day
+      setReduction = 99;     // Remove all sets (effective rest day)
+      exerciseLimit = 0;     // No exercises
+      intensityMod = 0.0;    // No training
+      message += 'MANDATORY REST DAY. Active recovery only (walking, stretching). ';
+      
+    } else if(score <= -3) {
+      // SEVERE FATIGUE - MINIMAL TRAINING
+      status = 'RECOVER';
+      color = '#ff6b6b';
+      message = '⚠️ SEVERE: High fatigue detected. ';
+      
+      // SCIENCE: Reduce volume 60-70%, maintain some intensity
+      setReduction = 2;      // Remove 2 sets per exercise
+      exerciseLimit = 2;     // Only 2 exercises max
+      intensityMod = 0.85;   // 85% intensity
+      message += 'Limit to 2 exercises max, 2-3 sets each at 85%. OR take rest day.';
+      
     } else if(score <= -2) {
+      // MODERATE FATIGUE - REDUCE VOLUME
       status = 'REDUCE VOLUME';
       color = '#ffbb33';
-      message += 'Cut session volume 20-30% or reduce intensity.';
-    } else if(score <= 0) {
+      message = '⚠️ MODERATE: Fatigue accumulating. ';
+      
+      // SCIENCE: Reduce volume 30-40%, slight intensity reduction
+      setReduction = 1;      // Remove 1 set per exercise
+      exerciseLimit = 4;     // Max 4 exercises
+      intensityMod = 0.90;   // 90% intensity
+      message += 'Cut 1 set per exercise, limit to 4 exercises, reduce load 10%.';
+      
+    } else if(score <= -1) {
+      // MILD FATIGUE - MAINTAIN WITH CAUTION
       status = 'MAINTAIN';
       color = '#9de8c5';
+      message = 'MAINTAIN: Some fatigue present. ';
+      
+      // SCIENCE: Small volume reduction, maintain intensity
+      setReduction = 0;      // Keep sets
+      exerciseLimit = 5;     // Max 5 exercises
+      intensityMod = 0.95;   // 95% intensity
+      message += 'Execute planned session but stay at 95% intensity. Monitor closely.';
+      
+    } else if(score <= 0) {
+      // NORMAL - MAINTAIN
+      status = 'MAINTAIN';
+      color = '#9de8c5';
+      message = '✓ NORMAL: Metrics balanced. ';
+      
+      setReduction = 0;
+      exerciseLimit = 99;
+      intensityMod = 1.0;
       message += 'Execute planned session as prescribed.';
+      
     } else {
+      // RECOVERED - PUSH HARD
       status = 'PUSH HARD';
       color = '#00ffb3';
+      message = '✓ OPTIMAL: Fully recovered. ';
+      
+      setReduction = 0;
+      exerciseLimit = 99;
+      intensityMod = 1.05;   // Can push 5% harder
       message += 'You\'re recovered and ready to push. Max effort today.';
     }
     
-    return {status, color, alert, message, score};
+    return {
+      status, 
+      color, 
+      alert, 
+      message, 
+      score,
+      volumeAdjustments: {
+        setReduction,      // Sets to remove per exercise
+        exerciseLimit,     // Max exercises to prescribe
+        intensityMod,      // Load multiplier
+        forceRestDay       // Should skip training entirely
+      }
+    };
   }
   
   // Generate specific workout prescription
@@ -2593,14 +2920,115 @@ ${prescription.summary}
     document.getElementById('prescriptionModal').classList.add('show');
   }
 
+  // ============================================
+  // GOD-MODE VOLUME ADJUSTMENT HELPER
+  // ============================================
+  function getGodModeVolumeAdjustments() {
+    const profile = getProfile();
+    if(!profile || !profile.fightCamp) {
+      return {
+        forceRestDay: false,
+        setReduction: 0,
+        exerciseLimit: 99,
+        intensityMod: 1.0,
+        status: 'MAINTAIN',
+        color: '#9de8c5',
+        message: ''
+      };
+    }
+    
+    // Calculate recent metrics
+    const recentDays = Object.keys(store).sort().slice(-7);
+    let totalCNS = 0, cnsCount = 0;
+    recentDays.forEach(d => {
+      if(store[d]?.cnsLoad) {
+        totalCNS += store[d].cnsLoad;
+        cnsCount++;
+      }
+    });
+    const avgCNS = cnsCount > 0 ? totalCNS / cnsCount : 0;
+    
+    const recommendation = getDailyRecommendation(profile, avgCNS, {});
+    
+    return {
+      forceRestDay: recommendation.volumeAdjustments.forceRestDay,
+      setReduction: recommendation.volumeAdjustments.setReduction,
+      exerciseLimit: recommendation.volumeAdjustments.exerciseLimit,
+      intensityMod: recommendation.volumeAdjustments.intensityMod,
+      status: recommendation.status,
+      color: recommendation.color,
+      message: recommendation.message,
+      alert: recommendation.alert
+    };
+  }
+
   function initStrength(targetId){
     const box=document.getElementById(targetId);
+    
+    // GET GOD-MODE VOLUME ADJUSTMENTS
+    const godMode = getGodModeVolumeAdjustments();
+    
+    // IF FORCE REST DAY - BLOCK TRAINING
+    if(godMode.forceRestDay) {
+      box.innerHTML=`
+        <div style="background:#ff6b6b;color:#fff;padding:24px;text-align:center;border-radius:8px">
+          <h2 style="margin:0 0 12px 0;font-size:24px">🚨 MANDATORY REST DAY</h2>
+          <div style="font-size:18px;margin-bottom:16px;font-weight:700">God-Mode Status: CRITICAL OVERTRAINING</div>
+          <div style="font-size:14px;line-height:1.6;margin-bottom:12px">
+            <strong>Multiple Fatigue Markers Elevated:</strong><br>
+            ${godMode.alert || 'ACWR >1.5, CNS >75, or Poor Sleep Pattern Detected'}
+          </div>
+          <div style="font-size:14px;line-height:1.6;background:rgba(0,0,0,0.2);padding:12px;border-radius:6px">
+            <strong>RECOMMENDATION:</strong> Take complete rest day or light active recovery only (walking, stretching, foam rolling).<br>
+            Training today will increase injury risk and delay recovery.
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    // BUILD WARNING BANNERS
+    let warnings = '';
+    
+    if(godMode.setReduction > 0) {
+      warnings += `
+        <div style="background:#ffbb33;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+          ⚠️ GOD-MODE ADJUSTMENT: Removing ${godMode.setReduction} set(s) per exercise due to ${godMode.alert || 'elevated fatigue markers'}
+        </div>`;
+    }
+    
+    if(godMode.exerciseLimit < 99) {
+      warnings += `
+        <div style="background:#ffbb33;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+          ⚠️ GOD-MODE ADJUSTMENT: Limited to maximum ${godMode.exerciseLimit} exercises today
+        </div>`;
+    }
+    
+    if(godMode.intensityMod < 1.0) {
+      const percentReduction = Math.round((1 - godMode.intensityMod) * 100);
+      warnings += `
+        <div style="background:#ffbb33;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+          ⚠️ GOD-MODE ADJUSTMENT: All loads reduced ${percentReduction}% today (multiply your normal weights by ${godMode.intensityMod})
+        </div>`;
+    }
+    
+    if(godMode.intensityMod > 1.0) {
+      warnings += `
+        <div style="background:#00ffb3;color:#0a0f0d;padding:12px;margin-bottom:8px;border-radius:6px;font-weight:600">
+          ✓ GOD-MODE STATUS: OPTIMAL - You can push 5% harder today! All fatigue markers excellent.
+        </div>`;
+    }
+    
+    // Store God-Mode adjustments in data attribute for access by other functions
+    box.setAttribute('data-god-mode', JSON.stringify(godMode));
+    
     box.innerHTML=`
+      ${warnings}
       <div class="row" style="margin-bottom:6px">
         <button class="btn primary" onclick="addExercise('${targetId}')">+ Add Exercise</button>
         <div class="muted sm">Then "+ Add Set" under each exercise.</div>
       </div>
-      <div class="muted sm">Enter working sets only. Volume = Σ weight×reps.</div>
+      <div class="muted sm">Enter working sets only. Volume = Σ weight×reps. <strong>God-Mode adjustments active.</strong></div>
       <div id="${targetId}-list"></div>`;
   }
   function hydrateStrength(targetId,data){
@@ -2611,7 +3039,20 @@ ${prescription.summary}
   }
   function addExercise(targetId, preset){
     const list=document.getElementById(`${targetId}-list`);
-    const idx=list.children.length+1;
+    
+    // GET GOD-MODE ADJUSTMENTS from parent container
+    const box=document.getElementById(targetId);
+    const godModeJSON = box.getAttribute('data-god-mode');
+    const godMode = godModeJSON ? JSON.parse(godModeJSON) : {exerciseLimit: 99, setReduction: 0};
+    
+    // CHECK EXERCISE LIMIT
+    const currentExerciseCount = list.children.length;
+    if(currentExerciseCount >= godMode.exerciseLimit) {
+      alert(`⚠️ GOD-MODE LIMIT: Maximum ${godMode.exerciseLimit} exercises allowed today due to fatigue markers.\n\nAdding more exercises would increase injury risk and delay recovery.`);
+      return;
+    }
+    
+    const idx=currentExerciseCount+1;
     const ex=document.createElement('div');
     ex.className='sec'; ex.innerHTML=`
       <div class="hd">Exercise ${idx}</div>
@@ -2635,7 +3076,11 @@ ${prescription.summary}
       </div>`;
     list.appendChild(ex);
     const sb=ex.querySelector('.setBody');
-    (preset?.sets||Array.from({length:3}).map(_=>({w:'',r:'',rpe:'',velocity:''}))).forEach(s=>{
+    
+    // APPLY SET REDUCTION: Default is 3 sets, reduce by setReduction amount
+    const defaultSetCount = Math.max(1, 3 - godMode.setReduction); // Never less than 1 set
+    
+    (preset?.sets||Array.from({length:defaultSetCount}).map(_=>({w:'',r:'',rpe:'',velocity:''}))).forEach(s=>{
       const tr=document.createElement('tr');
       tr.innerHTML=`<td><input class="w" type="number" inputmode="decimal" step="0.1" value="${s.w}"></td>
         <td><input class="r" type="number" value="${s.r}"></td>
