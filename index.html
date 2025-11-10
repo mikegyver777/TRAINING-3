@@ -141,7 +141,39 @@
         <div><label>Primary Goal</label><input id="pfGoal" placeholder="e.g., fight camp, strength, VO2"></div>
         <div><label>Weekly Availability (days)</label><input id="pfAvail" type="number" min="1" max="14"></div>
       </div>
-      <div class="note" style="margin-top:10px">
+      
+      <div class="sec" style="margin-top:12px">
+        <div class="hd">🚴 Assault Bike - CP & W′ Calibration (God-Mode)</div>
+        <div class="bd">
+          <div class="note" style="margin-bottom:10px">
+            <b>Critical Power (CP) & W′ (Anaerobic Work Capacity) - Skiba Model</b><br>
+            Perform 2-3 maximal all-out tests: 3min, 5min, 12min. Record average watts for each. System calculates CP (sustainable power) and W′ (anaerobic reserves).
+          </div>
+          <div class="grid2">
+            <div>
+              <label>3-Min Max Test (avg watts)</label>
+              <input id="pfTest3" type="number" placeholder="e.g., 285" />
+            </div>
+            <div>
+              <label>5-Min Max Test (avg watts)</label>
+              <input id="pfTest5" type="number" placeholder="e.g., 245" />
+            </div>
+            <div>
+              <label>12-Min Max Test (avg watts)</label>
+              <input id="pfTest12" type="number" placeholder="e.g., 195" />
+            </div>
+            <div>
+              <label>RPM³ Constant (k) - calibrate</label>
+              <input id="pfRPMk" type="number" step="0.00001" placeholder="0.00025" />
+            </div>
+          </div>
+          <div id="cpResults" style="margin-top:10px;padding:10px;background:#0d1714;border:1px solid #1e6a4f;border-radius:4px;color:#9de8c5">
+            Enter at least 2 test results, then save profile to calculate CP & W′
+          </div>
+        </div>
+      </div>
+      
+      <div class="grid2">
         <b>Max HR Auto-Calculation:</b> Uses Tanaka formula (2001): <b>208 - (0.7 × age)</b> - the most accurate research-validated formula for adults. Leave Max HR blank for auto-calculation, or enter a value to override (e.g., from a VO2 max test).<br><br>
         <b>Sport Focus Impact:</b> Your sport focus adjusts TSS/CNS calculations and provides weekly training recommendations. For example, "Hybrid" requires balanced work across Strength, Power, Endurance, Skill, and Recovery domains. Weekly Analysis will show which domains you've covered and what's missing.<br><br>
         <b>UFC PI CNS Modality Weighting:</b> CNS calculations use scientific modality weights:<br>
@@ -169,6 +201,10 @@
         <div class="kpi"><div class="muted">Estimated CNS Load</div><div class="v" id="kpiCNS">0</div></div>
         <div class="kpi"><div class="muted">Total TSS (TRIMP/sRPE)</div><div class="v" id="kpiTSS">0</div></div>
         <div class="kpi"><div class="muted">Strength Volume (lb)</div><div class="v" id="kpiVOL">0</div></div>
+      </div>
+      
+      <div id="bjjInfoBox" style="display:none;margin-top:10px;padding:10px;background:#0d1f1a;border:1px solid #00ffb3;border-radius:4px">
+        <!-- GOD-MODE: BJJ Rehydration & GlycoIndex Info -->
       </div>
 
       <div class="sec">
@@ -316,8 +352,12 @@
                 <div><label>Peak HR</label><input id="trkPeakHR" type="number"></div>
                 <div><label>Min in Zone 5</label><input id="trkZ5" type="number"></div>
                 <div><label>Min in Zone 4</label><input id="trkZ4" type="number"></div>
+                <div style="grid-column:span 2">
+                  <label>DFA-α1 (HRV Complexity)</label>
+                  <input id="trkDFA" type="number" step="0.01" placeholder="Optional - Advanced HRV metric">
+                </div>
               </div>
-              <p class="muted sm">From Polar app summary for best accuracy.</p>
+              <p class="muted sm">From Polar app summary for best accuracy. DFA-α1 <0.75 during easy work = autonomic overtraining.</p>
             </div>
           </div>
         </div>
@@ -373,7 +413,7 @@
             <div class="bd">
               <div class="row" id="c2Buttons" style="display:none">
                 <button class="btn" onclick="addBikeRow({})">+ Add Rep</button>
-                <div class="muted sm">Stop when time-cap elapses. Track Max RPM, Time→Z5, Total Rep Time, Time→Z2</div>
+                <div class="muted sm">Stop when time-cap elapses. Track Max RPM, Time→Z5, Total Rep Time, Time→Z2, HHR60 (HR recovery quality)</div>
               </div>
               <table id="bikeTable" style="font-size:12px">
                 <thead>
@@ -386,6 +426,7 @@
                     <th>Time → Z5 (s)</th>
                     <th>Total Rep Time (s)</th>
                     <th>Time → Z2 (s)</th>
+                    <th>HHR60</th>
                     <th>Notes</th>
                   </tr>
                 </thead>
@@ -407,6 +448,13 @@
                 <div><label>Peak HR</label><input id="bikePeakHR" type="number"></div>
                 <div><label>Min in Z5</label><input id="bikeZ5" type="number"></div>
                 <div><label>Min in Z4</label><input id="bikeZ4" type="number"></div>
+                <div style="grid-column:span 2">
+                  <label>DFA-α1 (HRV Complexity)</label>
+                  <input id="bikeDFA" type="number" step="0.01" placeholder="Optional - Advanced">
+                </div>
+              </div>
+              <div class="note" style="margin-top:6px;font-size:11px">
+                <b>God-Mode:</b> Avg HR enables Banister TRIMP calculation (exponential internal load formula). DFA-α1 <0.75 during easy work = autonomic overtraining.
               </div>
             </div>
           </div>
@@ -430,6 +478,14 @@
             </select>
           </div>
           <div><label>Sleep (h)</label><input id="bjjSleep" type="number" step="0.5"></div>
+          <div><label>Z4 Time (min) - GlycoIndex</label><input id="bjjZ4" type="number" placeholder="Optional"></div>
+          <div><label>Z5 Time (min) - GlycoIndex</label><input id="bjjZ5" type="number" placeholder="Optional"></div>
+          <div><label>Bursts/Scrambles - GlycoIndex</label><input id="bjjBursts" type="number" placeholder="Optional"></div>
+          <div style="grid-column:span 2">
+            <div class="note" style="font-size:11px">
+              <b>God-Mode GlycoIndex:</b> Measures glycolytic stress. Formula: t_Z4 + 2×t_Z5 + 0.5×Bursts. High glycolytic stress (>30) requires extended carb repletion.
+            </div>
+          </div>
         </div>
       </div>
 
@@ -598,6 +654,30 @@
     pfAge.value=p.age||''; pfSex.value=p.sex||''; pfHt.value=p.ht||''; pfWt.value=p.wt||'';
     pfTA.value=p.ta||''; pfRHR.value=p.rhr||''; pfMHR.value=p.mhr||''; pfSport.value=p.sport||''; pfGoal.value=p.goal||''; pfAvail.value=p.avail||'';
     
+    // Load CP & W′ test values
+    const test3El = document.getElementById('pfTest3');
+    const test5El = document.getElementById('pfTest5');
+    const test12El = document.getElementById('pfTest12');
+    const rpmKEl = document.getElementById('pfRPMk');
+    
+    if(test3El) test3El.value = p.test3 || '';
+    if(test5El) test5El.value = p.test5 || '';
+    if(test12El) test12El.value = p.test12 || '';
+    if(rpmKEl) rpmKEl.value = p.rpmK || 0.00025;
+    
+    // Display CP & W′ if already calculated
+    if(p.CP && p.WPrime) {
+      document.getElementById('cpResults').innerHTML = `
+        <div style="color:#00ffb3;font-weight:700;margin-bottom:6px">✓ CP & W′ Calculated</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <div><b>Critical Power (CP):</b> ${p.CP} watts</div>
+          <div><b>W′ (Anaerobic Capacity):</b> ${p.WPrime} joules</div>
+          <div><b>Tau (Recovery):</b> ${p.tau || 316}s</div>
+        </div>
+        <div style="margin-top:6px;color:#9de8c5">Your sustainable power is ${p.CP}W. You have ${Math.round(p.WPrime/1000)}kJ of anaerobic reserves.</div>
+      `;
+    }
+    
     // Trigger max HR calculation if age exists but max HR doesn't
     if(pfAge.value && !pfMHR.value) {
       pfAge.dispatchEvent(new Event('input'));
@@ -607,9 +687,45 @@
   };
   function closeProfile(){profileModal.classList.remove('show')}
   function saveProfile(){
-    const p={age:fmt(pfAge.value),sex:pfSex.value,ht:fmt(pfHt.value),wt:fmt(pfWt.value),ta:fmt(pfTA.value),
-      rhr:fmt(pfRHR.value),mhr:fmt(pfMHR.value),sport:pfSport.value,goal:pfGoal.value,avail:fmt(pfAvail.value)};
-    LS.set('elite_profile',p); renderZoneChips(); profileModal.classList.remove('show');
+    const p={
+      age:fmt(pfAge.value),
+      sex:pfSex.value,
+      ht:fmt(pfHt.value),
+      wt:fmt(pfWt.value),
+      ta:fmt(pfTA.value),
+      rhr:fmt(pfRHR.value),
+      mhr:fmt(pfMHR.value),
+      sport:pfSport.value,
+      goal:pfGoal.value,
+      avail:fmt(pfAvail.value),
+      test3:fmt(document.getElementById('pfTest3')?.value),
+      test5:fmt(document.getElementById('pfTest5')?.value),
+      test12:fmt(document.getElementById('pfTest12')?.value),
+      rpmK:fmt(document.getElementById('pfRPMk')?.value) || 0.00025
+    };
+    
+    // Calculate CP & W′ if tests available
+    const cpData = calculateCPandWPrime(p.test3, p.test5, p.test12);
+    if(cpData) {
+      p.CP = cpData.CP;
+      p.WPrime = cpData.WPrime;
+      p.tau = cpData.tau;
+      
+      // Display results
+      document.getElementById('cpResults').innerHTML = `
+        <div style="color:#00ffb3;font-weight:700;margin-bottom:6px">✓ CP & W′ Calculated</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <div><b>Critical Power (CP):</b> ${cpData.CP} watts</div>
+          <div><b>W′ (Anaerobic Capacity):</b> ${cpData.WPrime} joules</div>
+          <div><b>Tau (Recovery):</b> ${cpData.tau}s</div>
+        </div>
+        <div style="margin-top:6px;color:#9de8c5">Your sustainable power is ${cpData.CP}W. You have ${Math.round(cpData.WPrime/1000)}kJ of anaerobic reserves.</div>
+      `;
+    }
+    
+    LS.set('elite_profile',p); 
+    renderZoneChips(); 
+    profileModal.classList.remove('show');
   }
 
   let curKey=null;
@@ -640,9 +756,48 @@
     }
     dayModal.classList.add('show');
   }
-  function setKPIs(d){document.getElementById('kpiCNS').textContent=Math.round(d.totalCNS||0);
+  function setKPIs(d){
+    document.getElementById('kpiCNS').textContent=Math.round(d.totalCNS||0);
     document.getElementById('kpiTSS').textContent=Math.round(d.tss||0);
-    document.getElementById('kpiVOL').textContent=Math.round(d.totalVolume||0);}
+    document.getElementById('kpiVOL').textContent=Math.round(d.totalVolume||0);
+    
+    // GOD-MODE: Display normalized CNS if available
+    if(d.normalizedCNS && d.cnsZScore && d.cnsBaseline) {
+      const cnsEl = document.getElementById('kpiCNS');
+      cnsEl.innerHTML = `${Math.round(d.totalCNS||0)}<br><span style="font-size:11px;color:#9de8c5">z=${d.cnsZScore} (base:${d.cnsBaseline})</span>`;
+    }
+    
+    // GOD-MODE: Display BJJ rehydration and GlycoIndex info
+    const bjjInfoBox = document.getElementById('bjjInfoBox');
+    if(d.modalities?.bjj && (d.modalities.bjj.rehydration > 0 || d.modalities.bjj.glycoIndex > 0)) {
+      let html = '<div style="font-weight:700;color:#00ffb3;margin-bottom:8px">🥋 BJJ Recovery Prescription:</div>';
+      
+      if(d.modalities.bjj.rehydration > 0) {
+        html += `
+          <div style="margin-bottom:8px">
+            <b>Rehydration Target:</b> ${d.modalities.bjj.rehydration}L over 2-4 hours
+            <br><span style="font-size:12px;color:#ccc">Add ${d.modalities.bjj.sodiumNeeds}mg sodium (electrolytes)</span>
+          </div>
+        `;
+      }
+      
+      if(d.modalities.bjj.glycoIndex > 0) {
+        const glycoLevel = d.modalities.bjj.glycoIndex > 30 ? 'HIGH' : d.modalities.bjj.glycoIndex > 20 ? 'MODERATE' : 'LOW';
+        const glycoColor = d.modalities.bjj.glycoIndex > 30 ? '#ff6b6b' : d.modalities.bjj.glycoIndex > 20 ? '#ffbb33' : '#00ffb3';
+        html += `
+          <div>
+            <b>GlycoIndex:</b> <span style="color:${glycoColor};font-weight:700">${d.modalities.bjj.glycoIndex} (${glycoLevel})</span>
+            <br><span style="font-size:12px;color:#ccc">${d.modalities.bjj.glycoIndex > 30 ? 'High glycolytic stress - prioritize carb repletion 1-1.2g/kg within 2h' : d.modalities.bjj.glycoIndex > 20 ? 'Moderate glycolytic stress - standard post-training nutrition' : 'Low glycolytic stress - normal recovery'}</span>
+          </div>
+        `;
+      }
+      
+      bjjInfoBox.innerHTML = html;
+      bjjInfoBox.style.display = 'block';
+    } else {
+      bjjInfoBox.style.display = 'none';
+    }
+  }
   function closeDay(){dayModal.classList.remove('show')}
   function toggleSection(id){const el=document.getElementById(id); el.style.display=(el.style.display==='none'?'block':'none')}
 
@@ -678,18 +833,22 @@
           </div>
         </div>
         <table class="sm" style="margin-top:8px">
-          <thead><tr><th>Weight (lb)</th><th>Reps</th><th>RPE</th><th></th></tr></thead>
+          <thead><tr><th>Weight (lb)</th><th>Reps</th><th>RPE</th><th>Velocity (m/s)</th><th></th></tr></thead>
           <tbody class="setBody"></tbody>
         </table>
         <button class="btn" onclick="addSet(this)">+ Add Set</button>
+        <div class="note" style="margin-top:6px;font-size:11px">
+          <b>God-Mode Velocity Stops:</b> Optional bar velocity tracking. Alert triggers when velocity drops >20-40% from first rep (indicates fatigue, prevents junk volume).
+        </div>
       </div>`;
     list.appendChild(ex);
     const sb=ex.querySelector('.setBody');
-    (preset?.sets||Array.from({length:3}).map(_=>({w:'',r:'',rpe:''}))).forEach(s=>{
+    (preset?.sets||Array.from({length:3}).map(_=>({w:'',r:'',rpe:'',velocity:''}))).forEach(s=>{
       const tr=document.createElement('tr');
       tr.innerHTML=`<td><input class="w" type="number" inputmode="decimal" step="0.1" value="${s.w}"></td>
         <td><input class="r" type="number" value="${s.r}"></td>
         <td><input class="p" type="number" step="0.5" value="${s.rpe}"></td>
+        <td><input class="v" type="number" step="0.01" value="${s.velocity||''}" placeholder="Optional"></td>
         <td><button class="btn" onclick="this.closest('tr').remove()">🗑</button></td>`;
       sb.appendChild(tr);
     });
@@ -700,6 +859,7 @@
     tr.innerHTML=`<td><input class="w" type="number" inputmode="decimal" step="0.1"></td>
       <td><input class="r" type="number"></td>
       <td><input class="p" type="number" step="0.5"></td>
+      <td><input class="v" type="number" step="0.01" placeholder="Optional"></td>
       <td><button class="btn" onclick="this.closest('tr').remove()">🗑</button></td>`;
     sb.appendChild(tr);
   }
@@ -708,7 +868,12 @@
     const exEls=[...list.querySelectorAll('.sec')];
     const exercises=exEls.map(sec=>{
       const name=sec.querySelector('.ex-name').value.trim();
-      const sets=[...sec.querySelectorAll('.setBody tr')].map(tr=>({w:fmt(tr.querySelector('.w').value),r:fmt(tr.querySelector('.r').value),rpe:fmt(tr.querySelector('.p').value)})).filter(s=>s.w>0&&s.r>0);
+      const sets=[...sec.querySelectorAll('.setBody tr')].map(tr=>({
+        w:fmt(tr.querySelector('.w').value),
+        r:fmt(tr.querySelector('.r').value),
+        rpe:fmt(tr.querySelector('.p').value),
+        velocity:fmt(tr.querySelector('.v')?.value) // GOD-MODE: Bar velocity
+      })).filter(s=>s.w>0&&s.r>0);
       return name && sets.length?{name,sets}:null;
     }).filter(Boolean);
     if(!exercises.length) return null;
@@ -717,8 +882,26 @@
     let est1RMs = [];
     let hypertrophyStimulus = 0;
     let neuralLoad = 0;
+    let totalEffReps = 0; // GOD-MODE: Effective Reps
+    let velocityWarnings = []; // GOD-MODE: Velocity stop detection
     
     exercises.forEach(ex => {
+      // GOD-MODE: Check for velocity drops in this exercise
+      const velocities = ex.sets.filter(s => s.velocity > 0).map(s => s.velocity);
+      if(velocities.length >= 2) {
+        const firstVelocity = velocities[0];
+        const lastVelocity = velocities[velocities.length - 1];
+        const velocityDrop = ((firstVelocity - lastVelocity) / firstVelocity) * 100;
+        
+        if(velocityDrop > 20) {
+          velocityWarnings.push({
+            exercise: ex.name,
+            drop: velocityDrop.toFixed(1),
+            threshold: velocityDrop > 40 ? 'CRITICAL' : 'WARNING'
+          });
+        }
+      }
+      
       ex.sets.forEach(s => {
         vol += s.w * s.r;
         
@@ -737,6 +920,14 @@
           
           // Neural load = load% × RPE × sets
           neuralLoad += (loadPct / 100) * s.rpe;
+          
+          // GOD-MODE: Effective Reps = max(0, reps - RIR - 4)
+          // Only reps close to failure count for hypertrophy
+          const effReps = Math.max(0, s.r - RIR - 4);
+          totalEffReps += effReps;
+          
+          // Store EffReps in set for display
+          s.effReps = effReps;
         }
       });
     });
@@ -758,6 +949,8 @@
       est1RM: avg1RM,
       hypertrophyStimulus: Math.round(hypertrophyStimulus),
       neuralLoad: Math.round(neuralLoad),
+      effReps: totalEffReps, // GOD-MODE: Total Effective Reps
+      velocityWarnings, // GOD-MODE: Velocity stop alerts
       cnsScore: clamp(cns,0,100), 
       tss
     };
@@ -771,7 +964,7 @@
     document.getElementById('trackExercises').innerHTML='';
     document.querySelectorAll('.warmupCheck').forEach(cb => cb.checked = false);
     updateWarmupProgress();
-    ['trkAvgHR','trkPeakHR','trkZ5','trkZ4'].forEach(id=>document.getElementById(id).value='');
+    ['trkAvgHR','trkPeakHR','trkZ5','trkZ4','trkDFA'].forEach(id=>document.getElementById(id).value='');
   }
   
   function updateWarmupProgress(){
@@ -863,6 +1056,24 @@
             <label>Time (MM:SS)</label>
             <input class="exTime" type="text" value="${data.time||''}" placeholder="00:30">
           </div>
+          <div>
+            <label>Flight Time (ms) - RSI</label>
+            <input class="exFlightTime" type="number" step="1" value="${data.flightTime||''}" placeholder="Optional">
+          </div>
+          <div>
+            <label>Contact Time (ms) - RSI</label>
+            <input class="exContactTime" type="number" step="1" value="${data.contactTime||''}" placeholder="Optional">
+          </div>
+          <div>
+            <label>Rest Between Sets (s)</label>
+            <input class="exRest" type="number" step="1" value="${data.restTime||''}" placeholder="e.g., 60">
+          </div>
+          <div class="rsiDisplay" style="grid-column:span 2;display:none;padding:8px;background:#0d1f1a;border:1px solid #00ffb3;border-radius:4px">
+            <b>RSI (Reactive Strength Index):</b> <span class="rsiValue">—</span>
+          </div>
+          <div class="densityDisplay" style="grid-column:span 2;display:none;padding:8px;background:#0d1714;border:1px solid #ffbb33;border-radius:4px">
+            <b>Density Factor:</b> <span class="densityValue">—</span> <span class="densityNote" style="font-size:11px"></span>
+          </div>
           <div style="grid-column:span 2">
             <label>Notes</label>
             <input class="exNotes" type="text" value="${data.notes||''}" placeholder="Optional notes">
@@ -872,6 +1083,94 @@
     `;
     
     container.appendChild(exerciseDiv);
+    
+    // GOD-MODE: Auto-calculate RSI when flight/contact times change
+    const flightInput = exerciseDiv.querySelector('.exFlightTime');
+    const contactInput = exerciseDiv.querySelector('.exContactTime');
+    const restInput = exerciseDiv.querySelector('.exRest');
+    const rsiDisplay = exerciseDiv.querySelector('.rsiDisplay');
+    const rsiValue = exerciseDiv.querySelector('.rsiValue');
+    const densityDisplay = exerciseDiv.querySelector('.densityDisplay');
+    const densityValue = exerciseDiv.querySelector('.densityValue');
+    const densityNote = exerciseDiv.querySelector('.densityNote');
+    
+    const updateRSI = () => {
+      const flight = parseFloat(flightInput.value);
+      const contact = parseFloat(contactInput.value);
+      
+      if(flight > 0 && contact > 0) {
+        const rsi = (flight / contact).toFixed(2);
+        rsiValue.textContent = rsi;
+        rsiDisplay.style.display = 'block';
+        
+        // Color code RSI
+        if(rsi >= 2.0) {
+          rsiDisplay.style.borderColor = '#00ffb3';
+          rsiValue.style.color = '#00ffb3';
+        } else if(rsi >= 1.5) {
+          rsiDisplay.style.borderColor = '#ffbb33';
+          rsiValue.style.color = '#ffbb33';
+        } else {
+          rsiDisplay.style.borderColor = '#ff6b6b';
+          rsiValue.style.color = '#ff6b6b';
+        }
+      } else {
+        rsiDisplay.style.display = 'none';
+      }
+    };
+    
+    // GOD-MODE: Calculate Density Factor
+    const updateDensity = () => {
+      const contact = parseFloat(contactInput.value);
+      const rest = parseFloat(restInput.value);
+      
+      if(contact > 0 && rest > 0) {
+        // DensityFactor based on contact:rest ratio
+        // Higher density = less rest relative to work = more tendon stress
+        const contactSec = contact / 1000; // Convert ms to seconds
+        const ratio = contactSec / rest;
+        
+        // DensityFactor ranges from 1.0 (leisurely) to 1.4 (intense)
+        // ratio < 0.01 (e.g., 100ms contact, 60s rest) = 1.0
+        // ratio > 0.05 (e.g., 300ms contact, 6s rest) = 1.4
+        let densityFactor = 1.0 + (Math.min(ratio, 0.05) / 0.05) * 0.4;
+        densityFactor = Math.min(1.4, Math.max(1.0, densityFactor));
+        
+        densityValue.textContent = densityFactor.toFixed(2) + '×';
+        
+        if(densityFactor >= 1.3) {
+          densityDisplay.style.borderColor = '#ff6b6b';
+          densityValue.style.color = '#ff6b6b';
+          densityNote.textContent = '(High density - elevated tendon stress)';
+          densityNote.style.color = '#ff6b6b';
+        } else if(densityFactor >= 1.15) {
+          densityDisplay.style.borderColor = '#ffbb33';
+          densityValue.style.color = '#ffbb33';
+          densityNote.textContent = '(Moderate density)';
+          densityNote.style.color = '#ffbb33';
+        } else {
+          densityDisplay.style.borderColor = '#00ffb3';
+          densityValue.style.color = '#00ffb3';
+          densityNote.textContent = '(Low density - adequate rest)';
+          densityNote.style.color = '#00ffb3';
+        }
+        
+        densityDisplay.style.display = 'block';
+      } else {
+        densityDisplay.style.display = 'none';
+      }
+    };
+    
+    flightInput.addEventListener('input', updateRSI);
+    contactInput.addEventListener('input', () => {
+      updateRSI();
+      updateDensity();
+    });
+    restInput.addEventListener('input', updateDensity);
+    
+    // Trigger on load if data exists
+    if(data.flightTime && data.contactTime) updateRSI();
+    if(data.contactTime && data.restTime) updateDensity();
   }
   
   function toggleExerciseFields(selectEl){
@@ -903,8 +1202,31 @@
       const time = exDiv.querySelector('.exTime').value;
       const notes = exDiv.querySelector('.exNotes').value;
       
+      // GOD-MODE: RSI data collection
+      const flightTime = fmt(exDiv.querySelector('.exFlightTime').value);
+      const contactTime = fmt(exDiv.querySelector('.exContactTime').value);
+      const restTime = fmt(exDiv.querySelector('.exRest').value);
+      
       let totalReps = 0;
       const ex = { name, type, sets, rpe, time, notes };
+      
+      // Add RSI if both values present
+      if(flightTime > 0 && contactTime > 0) {
+        ex.flightTime = flightTime;
+        ex.contactTime = contactTime;
+        ex.rsi = (flightTime / contactTime).toFixed(2);
+      }
+      
+      // GOD-MODE: Calculate Density Factor
+      if(contactTime > 0 && restTime > 0) {
+        ex.restTime = restTime;
+        const contactSec = contactTime / 1000;
+        const ratio = contactSec / restTime;
+        let densityFactor = 1.0 + (Math.min(ratio, 0.05) / 0.05) * 0.4;
+        ex.densityFactor = Math.min(1.4, Math.max(1.0, densityFactor));
+      } else {
+        ex.densityFactor = 1.0; // Default if not specified
+      }
       
       if(type === 'bilateral') {
         const reps = fmt(exDiv.querySelector('.exReps').value);
@@ -932,12 +1254,23 @@
     const achState = trkAch.value || 'Fresh';
     const tendonFactor = { Fresh: 1.0, Tight: 1.2, Sore: 1.5 }[achState] || 1.0;
     
-    // Calculate tendon load with impact coefficients AND surface/tendon factors (UFC PI)
+    // Calculate tendon load with impact coefficients AND surface/tendon/density factors (UFC PI)
     let tendonLoad = 0;
+    let avgDensityFactor = 0;
+    let densityCount = 0;
+    
     exercises.forEach(ex => {
       const impactCoef = getImpactCoefficient(ex.name);
-      tendonLoad += ex.totalReps * impactCoef * surfaceFactor * tendonFactor;
+      const density = ex.densityFactor || 1.0;
+      tendonLoad += ex.totalReps * impactCoef * surfaceFactor * tendonFactor * density;
+      
+      if(ex.densityFactor) {
+        avgDensityFactor += ex.densityFactor;
+        densityCount++;
+      }
     });
+    
+    avgDensityFactor = densityCount > 0 ? (avgDensityFactor / densityCount).toFixed(2) : 1.0;
     
     const totalContacts = exercises.reduce((sum, ex) => sum + ex.totalReps, 0);
     const avgRPE = exercises.filter(ex=>ex.rpe>0).reduce((s,ex)=>s+ex.rpe,0) / exercises.filter(ex=>ex.rpe>0).length || 0;
@@ -952,11 +1285,29 @@
     cns = applyModalityWeight(cns, 'plyo'); // Plyometrics = 0.75
     
     const tss = Math.round(60 + tendonLoad*0.12 + (avgRPE*5));
-    const hr={avg:fmt(trkAvgHR.value),peak:fmt(trkPeakHR.value),z5:fmt(trkZ5.value),z4:fmt(trkZ4.value)};
+    const hr={
+      avg:fmt(trkAvgHR.value),
+      peak:fmt(trkPeakHR.value),
+      z5:fmt(trkZ5.value),
+      z4:fmt(trkZ4.value),
+      dfa:fmt(document.getElementById('trkDFA')?.value) // GOD-MODE: DFA-α1
+    };
+    
+    // GOD-MODE: Check for DFA-α1 warning (autonomic overtraining)
+    let dfaWarning = false;
+    if(hr.dfa > 0 && hr.dfa < 0.75 && avgRPE < 7) {
+      dfaWarning = true; // Low DFA during easy work = overtraining
+    }
     
     // Add HR Zone TSS if available
     const hrTSS = calculateHRZoneTSS(hr);
     const finalTSS = hrTSS > 0 ? Math.round((tss + hrTSS) / 2) : tss;
+    
+    // GOD-MODE: Calculate average RSI
+    const rsiExercises = exercises.filter(ex => ex.rsi);
+    const avgRSI = rsiExercises.length > 0 
+      ? (rsiExercises.reduce((s, ex) => s + parseFloat(ex.rsi), 0) / rsiExercises.length).toFixed(2)
+      : null;
     
     return {
       sleep:fmt(trkSleep.value), 
@@ -966,7 +1317,10 @@
       exercises,
       contacts:totalContacts,
       tendonLoad: Math.round(tendonLoad),
-      avgRPE, 
+      avgRPE,
+      avgRSI, // GOD-MODE: Average RSI
+      avgDensityFactor, // GOD-MODE: Average Density Factor
+      dfaWarning, // GOD-MODE: DFA-α1 autonomic warning
       cnsScore:clamp(cns,0,100), 
       tss: finalTSS, 
       hr
@@ -1377,6 +1731,7 @@
       <td><input type="number" class="tZ5" value="${p.tZ5||''}" style="width:80px"></td>
       <td><input type="number" class="tRep" value="${p.tRep||''}" style="width:90px"></td>
       <td><input type="number" class="tZ2" value="${p.tZ2||''}" style="width:80px"></td>
+      <td><input type="number" step="0.01" class="hhr60" value="${p.hhr60||''}" style="width:70px" placeholder="0.45" title="Heart Rate Recovery 60s"></td>
       <td><input class="noteTxt" value="${p.note||''}" style="width:100px"></td>`;
     tb.appendChild(tr);
   }
@@ -1393,11 +1748,26 @@
       tZ5:fmt(tr.querySelector('.tZ5').value), 
       tRep:fmt(tr.querySelector('.tRep').value), 
       tZ2:fmt(tr.querySelector('.tZ2').value),
+      hhr60:fmt(tr.querySelector('.hhr60')?.value), // GOD-MODE: HHR60
       note:tr.querySelector('.noteTxt').value 
     }));
 
     let cns = 45 + (fmt(bikeSleep.value)<7?10:0);
     let tss = 0;
+    
+    // GOD-MODE: Track HHR60 for recovery quality
+    const avgHHR60 = rd.filter(r=>r.hhr60>0).length > 0 
+      ? rd.filter(r=>r.hhr60>0).reduce((s,r)=>s+r.hhr60,0) / rd.filter(r=>r.hhr60>0).length 
+      : 0;
+    
+    // GOD-MODE: Calculate Banister TRIMP if HR data available
+    const profile = LS.get('elite_profile', {});
+    const bikeAvgHR = fmt(document.getElementById('bikeAvgHR')?.value);
+    const totalTime = fmt(document.getElementById('bikeTotalTime')?.value);
+    let banisterTRIMP = 0;
+    if(bikeAvgHR && totalTime && profile.mhr && profile.rhr) {
+      banisterTRIMP = calculateBanisterTRIMP(totalTime / 60, bikeAvgHR, profile);
+    }
 
     if(proto==='c2'){
       const cap = fmt(bikeCap.value)||25;
@@ -1412,9 +1782,16 @@
       
       const totalCals = rd.reduce((s,r)=>s+(r.cals||0),0);
       const avgWatts = rd.filter(r=>r.watts).length > 0 ? Math.round(rd.reduce((s,r)=>s+(r.watts||0),0)/rd.filter(r=>r.watts).length) : 0;
-      const totalTime = fmt(document.getElementById('bikeTotalTime')?.value);
+      const totalTimeVal = fmt(document.getElementById('bikeTotalTime')?.value);
       
-      return {proto, cap, target:fmt(bikeTarget.value), sleep:fmt(bikeSleep.value), totalTime, roundData:rd, avgMax, totalCals, avgWatts, cnsScore:clamp(cns,0,100), tss};
+      // GOD-MODE: RPM³ power estimation if watts not directly measured
+      const profile = LS.get('elite_profile', {});
+      let estimatedPower = avgWatts;
+      if(avgWatts === 0 && avgMax > 0) {
+        estimatedPower = Math.round(rpmToPower(avgMax, profile.rpmK));
+      }
+      
+      return {proto, cap, target:fmt(bikeTarget.value), sleep:fmt(bikeSleep.value), totalTime: totalTimeVal, roundData:rd, avgMax, totalCals, avgWatts, estimatedPower, avgHHR60: avgHHR60.toFixed(2), banisterTRIMP, cnsScore:clamp(cns,0,100), tss};
     }else{
       const rounds=fmt(bikeRounds.value)||rd.length||6;
       const avgMax = rd.length? Math.round(rd.reduce((a,b)=>a+b.rpmMax,0)/rd.length) : 0;
@@ -1436,26 +1813,76 @@
       
       const totalCals = rd.reduce((s,r)=>s+(r.cals||0),0);
       const avgWatts = rd.filter(r=>r.watts).length > 0 ? Math.round(rd.reduce((s,r)=>s+(r.watts||0),0)/rd.filter(r=>r.watts).length) : 0;
-      const totalTime = fmt(document.getElementById('bikeTotalTime')?.value);
+      const totalTimeVal = fmt(document.getElementById('bikeTotalTime')?.value);
+      
+      // GOD-MODE: RPM³ power estimation if watts not directly measured
+      const profile = LS.get('elite_profile', {});
+      let estimatedPower = avgWatts;
+      if(avgWatts === 0 && avgMax > 0) {
+        estimatedPower = Math.round(rpmToPower(avgMax, profile.rpmK));
+      }
       
       return {proto, rounds, work:fmt(bikeWork.value), rest:fmt(bikeRest.value), target:fmt(bikeTarget.value),
-        sleep:fmt(bikeSleep.value), totalTime, roundData:rd, avgMax, totalCals, avgWatts, cnsScore:clamp(cns,0,100), tss};
+        sleep:fmt(bikeSleep.value), totalTime: totalTimeVal, roundData:rd, avgMax, totalCals, avgWatts, estimatedPower, avgHHR60: avgHHR60.toFixed(2), banisterTRIMP, cnsScore:clamp(cns,0,100), tss};
     }
   }
 
-  function resetBJJ(){['bjjTime','bjjInt','bjjW1','bjjW2','bjjFeel','bjjSleep'].forEach(id=>{const el=document.getElementById(id); if(el.tagName==='SELECT')el.value=''; else el.value='';});}
-  function hydrateBJJ(d){resetBJJ(); if(!d) return; bjjTime.value=d.time||''; bjjInt.value=d.intensity||''; bjjW1.value=d.w1||''; bjjW2.value=d.w2||''; bjjFeel.value=d.feel||''; bjjSleep.value=d.sleep||'';}
+  function resetBJJ(){['bjjTime','bjjInt','bjjW1','bjjW2','bjjFeel','bjjSleep','bjjZ4','bjjZ5','bjjBursts'].forEach(id=>{const el=document.getElementById(id); if(el.tagName==='SELECT')el.value=''; else el.value='';});}
+  function hydrateBJJ(d){
+    resetBJJ(); 
+    if(!d) return; 
+    bjjTime.value=d.time||''; 
+    bjjInt.value=d.intensity||''; 
+    bjjW1.value=d.w1||''; 
+    bjjW2.value=d.w2||''; 
+    bjjFeel.value=d.feel||''; 
+    bjjSleep.value=d.sleep||'';
+    if(d.z4) document.getElementById('bjjZ4').value = d.z4;
+    if(d.z5) document.getElementById('bjjZ5').value = d.z5;
+    if(d.bursts) document.getElementById('bjjBursts').value = d.bursts;
+  }
   function collectBJJ(){
     if(!document.getElementById('mBJJ').checked) return null;
     const time=fmt(bjjTime.value); if(!time) return null;
     const sweat=fmt(bjjW1.value)-fmt(bjjW2.value);
+    
+    // GOD-MODE: GlycoIndex calculation
+    const z4Time = fmt(document.getElementById('bjjZ4')?.value) || 0;
+    const z5Time = fmt(document.getElementById('bjjZ5')?.value) || 0;
+    const bursts = fmt(document.getElementById('bjjBursts')?.value) || 0;
+    const glycoIndex = z4Time + (2 * z5Time) + (0.5 * bursts);
+    
     let cns=40+(sweat>=4?20:sweat>=3?10:0)+(bjjInt.value==='High'?15:0)+(bjjFeel.value==='Beat'?20:bjjFeel.value==='Tired'?12:0)+(fmt(bjjSleep.value)<7?10:0);
+    
+    // Add CNS from high glycolytic stress
+    if(glycoIndex > 30) cns += 15;
+    else if(glycoIndex > 20) cns += 10;
     
     // Apply UFC PI modality weighting
     cns = applyModalityWeight(cns, 'bjj'); // BJJ Live Rolling = 0.85
     
-    const tss=Math.round(time*1.5+(bjjInt.value==='High'?30:0));
-    return {time,intensity:bjjInt.value,w1:fmt(bjjW1.value),w2:fmt(bjjW2.value),feel:bjjFeel.value,sleep:fmt(bjjSleep.value),cnsScore:clamp(cns,0,100),tss};
+    const tss=Math.round(time*1.5+(bjjInt.value==='High'?30:0)+(glycoIndex*0.8));
+    
+    // GOD-MODE: Calculate rehydration needs
+    const rehydration = sweat > 0 ? (sweat * 1.5 * 0.453592).toFixed(2) : 0; // Convert lb to L and apply 1.5x
+    const sodiumNeeds = sweat > 0 ? Math.round((sweat * 0.453592) * 600) : 0; // 600mg per L
+    
+    return {
+      time,
+      intensity:bjjInt.value,
+      w1:fmt(bjjW1.value),
+      w2:fmt(bjjW2.value),
+      feel:bjjFeel.value,
+      sleep:fmt(bjjSleep.value),
+      z4: z4Time,
+      z5: z5Time,
+      bursts,
+      glycoIndex: Math.round(glycoIndex),
+      rehydration,
+      sodiumNeeds,
+      cnsScore:clamp(cns,0,100),
+      tss
+    };
   }
   function resetWalk(){['wDur','wDist','wPace'].forEach(id=>document.getElementById(id).value=''); wTer.value='Flat'; wPur.value='Recovery';}
   function hydrateWalk(d){resetWalk(); if(!d) return; wDur.value=d.dur||''; wDist.value=d.dist||''; wPace.value=d.pace||''; wTer.value=d.ter||'Flat'; wPur.value=d.pur||'Recovery';}
@@ -1487,6 +1914,62 @@
       zone2: 0.35       // Long Zone 2 = 0.35
     };
     return Math.round(rawCNS * (weights[modality] || 1.0));
+  }
+  
+  // GOD-MODE: CP & W′ CALCULATION (SKIBA MODEL)
+  function calculateCPandWPrime(test3, test5, test12) {
+    const tests = [];
+    if(test3) tests.push({ duration: 180, power: test3 });
+    if(test5) tests.push({ duration: 300, power: test5 });
+    if(test12) tests.push({ duration: 720, power: test12 });
+    
+    if(tests.length < 2) return null;
+    
+    // Linear regression: Work = CP × t + W′
+    // Work = Power × time
+    const n = tests.length;
+    let sumT = 0, sumW = 0, sumTW = 0, sumT2 = 0;
+    
+    tests.forEach(t => {
+      const time = t.duration;
+      const work = t.power * time;
+      sumT += time;
+      sumW += work;
+      sumTW += time * work;
+      sumT2 += time * time;
+    });
+    
+    const CP = (n * sumTW - sumT * sumW) / (n * sumT2 - sumT * sumT);
+    const WPrime = (sumW - CP * sumT) / n;
+    
+    return {
+      CP: Math.round(CP * 10) / 10,
+      WPrime: Math.round(WPrime),
+      tau: 316 // reconstitution time constant (default ~316s)
+    };
+  }
+  
+  // GOD-MODE: W′ DEPLETION/RECONSTITUTION TRACKING
+  function trackWPrimeUsage(currentPower, CP, WPrime, currentWPrimeBalance, deltaTime) {
+    // deltaTime in seconds
+    if(currentPower > CP) {
+      // Depletion: dW′/dt = -(P - CP)
+      const depletion = (currentPower - CP) * deltaTime;
+      return Math.max(0, currentWPrimeBalance - depletion);
+    } else {
+      // Reconstitution: dW′/dt = (W′_max - W′) / τ
+      const tau = 316; // reconstitution time constant
+      const reconstitution = ((WPrime - currentWPrimeBalance) / tau) * deltaTime;
+      return Math.min(WPrime, currentWPrimeBalance + reconstitution);
+    }
+  }
+  
+  // GOD-MODE: RPM → POWER CONVERSION
+  function rpmToPower(rpm, k) {
+    // P ≈ k × RPM³
+    // Default k ≈ 0.00025 (calibrate with one known reading)
+    const kValue = k || 0.00025;
+    return kValue * Math.pow(rpm, 3);
   }
   
   // UFC PI HR ZONE WEIGHTING FOR TSS
@@ -1551,7 +2034,15 @@
     CNS = Math.round(CNS * adjustments.cnsMultiplier);
     TSS = Math.round(TSS * adjustments.tssMultiplier);
     
-    day.totalCNS=CNS; day.totalVolume=VOL; day.tss=TSS;
+    // GOD-MODE: Calculate CNS z-score normalization
+    const cnsNormalized = normalizeCNSWithBaseline(CNS);
+    
+    day.totalCNS=CNS; 
+    day.normalizedCNS=cnsNormalized.normalized;
+    day.cnsZScore=cnsNormalized.zScore;
+    day.cnsBaseline=cnsNormalized.baseline;
+    day.totalVolume=VOL; 
+    day.tss=TSS;
     store[curKey]=day; LS.set('elite_days',store);
     hist.push({d:curKey,tss:TSS}); if(hist.length>28) hist.shift(); LS.set('elite_tss',hist);
     setKPIs(day);
@@ -1560,6 +2051,278 @@
   }
 
   const weekModal=document.getElementById('weekModal');
+  // GOD-MODE: Z5 SPIKE DETECTION (Week-over-week intensity monitoring)
+  function analyzeZ5Spike() {
+    // Compare this week's Z5 minutes vs last week
+    const allDays = Object.keys(store).sort();
+    const last14 = allDays.slice(-14);
+    
+    if(last14.length < 14) {
+      return {
+        hasData: false,
+        spike: false,
+        thisWeekZ5: 0,
+        lastWeekZ5: 0,
+        increasePercent: 0
+      };
+    }
+    
+    const lastWeek = last14.slice(0, 7);
+    const thisWeek = last14.slice(7, 14);
+    
+    let lastWeekZ5 = 0;
+    let thisWeekZ5 = 0;
+    
+    lastWeek.forEach(key => {
+      const day = store[key];
+      if(day?.modalities) {
+        if(day.modalities.track?.hr?.z5) lastWeekZ5 += day.modalities.track.hr.z5;
+        if(day.modalities.bike?.proto === 'c2') {
+          const rd = day.modalities.bike.roundData || [];
+          lastWeekZ5 += rd.reduce((s,r)=>s+(r.tZ5>0 ? Math.max(0, Math.min(r.tRep, r.tRep - r.tZ5)) / 60 : 0), 0);
+        }
+        if(day.modalities.bjj?.z5) lastWeekZ5 += day.modalities.bjj.z5;
+      }
+    });
+    
+    thisWeek.forEach(key => {
+      const day = store[key];
+      if(day?.modalities) {
+        if(day.modalities.track?.hr?.z5) thisWeekZ5 += day.modalities.track.hr.z5;
+        if(day.modalities.bike?.proto === 'c2') {
+          const rd = day.modalities.bike.roundData || [];
+          thisWeekZ5 += rd.reduce((s,r)=>s+(r.tZ5>0 ? Math.max(0, Math.min(r.tRep, r.tRep - r.tZ5)) / 60 : 0), 0);
+        }
+        if(day.modalities.bjj?.z5) thisWeekZ5 += day.modalities.bjj.z5;
+      }
+    });
+    
+    const increasePercent = lastWeekZ5 > 0 ? ((thisWeekZ5 - lastWeekZ5) / lastWeekZ5) * 100 : 0;
+    const hasSpike = increasePercent > 50;
+    
+    return {
+      hasData: true,
+      spike: hasSpike,
+      thisWeekZ5: Math.round(thisWeekZ5),
+      lastWeekZ5: Math.round(lastWeekZ5),
+      increasePercent: increasePercent.toFixed(1)
+    };
+  }
+  
+  // GOD-MODE: RSI DECLINE DETECTION (Reactive Strength Index monitoring)
+  function analyzeRSIDecline() {
+    // Check last 21 days for RSI trend and decline
+    const recentDays = Object.keys(store).sort().slice(-21);
+    const rsiData = [];
+    
+    recentDays.forEach(key => {
+      const day = store[key];
+      if(day?.modalities?.track?.avgRSI) {
+        rsiData.push({
+          date: key,
+          rsi: parseFloat(day.modalities.track.avgRSI)
+        });
+      }
+    });
+    
+    if(rsiData.length < 3) {
+      return {
+        hasData: false,
+        decline: false,
+        currentRSI: 0,
+        avgRSI: 0,
+        declinePercent: 0
+      };
+    }
+    
+    const avgRSI = rsiData.reduce((s,d)=>s+d.rsi,0) / rsiData.length;
+    const currentRSI = rsiData[rsiData.length - 1].rsi;
+    const declinePercent = ((avgRSI - currentRSI) / avgRSI) * 100;
+    
+    // Alert if RSI drops > 10% vs 21-day mean
+    const hasDecline = declinePercent > 10;
+    
+    return {
+      hasData: true,
+      decline: hasDecline,
+      currentRSI: currentRSI.toFixed(2),
+      avgRSI: avgRSI.toFixed(2),
+      declinePercent: declinePercent.toFixed(1),
+      rsiData
+    };
+  }
+  
+  // GOD-MODE: SLEEP PATTERN TRACKING (Multi-day monitoring)
+  function analyzeSleepPattern() {
+    // Check last 7 days for consecutive poor sleep (<6h)
+    const recentDays = Object.keys(store).sort().slice(-7);
+    const sleepData = [];
+    let consecutivePoorSleep = 0;
+    let maxConsecutivePoorSleep = 0;
+    let totalPoorSleepNights = 0;
+    
+    recentDays.forEach(key => {
+      const day = store[key];
+      let daySleep = 0;
+      
+      // Check all modalities for sleep data
+      if(day?.modalities) {
+        Object.values(day.modalities).forEach(mod => {
+          if(mod.sleep && mod.sleep > 0) {
+            daySleep = Math.max(daySleep, mod.sleep);
+          }
+        });
+      }
+      
+      sleepData.push({ date: key, hours: daySleep });
+      
+      if(daySleep > 0 && daySleep < 6) {
+        consecutivePoorSleep++;
+        totalPoorSleepNights++;
+        maxConsecutivePoorSleep = Math.max(maxConsecutivePoorSleep, consecutivePoorSleep);
+      } else if(daySleep >= 6) {
+        consecutivePoorSleep = 0;
+      }
+    });
+    
+    const avgSleep = sleepData.filter(s=>s.hours>0).length > 0
+      ? sleepData.filter(s=>s.hours>0).reduce((a,b)=>a+b.hours,0) / sleepData.filter(s=>s.hours>0).length
+      : 0;
+    
+    return {
+      maxConsecutive: maxConsecutivePoorSleep,
+      totalPoorNights: totalPoorSleepNights,
+      avgSleep: avgSleep.toFixed(1),
+      hasAlert: maxConsecutivePoorSleep >= 2,
+      sleepData
+    };
+  }
+  
+  // GOD-MODE: Z-SCORE NORMALIZATION FOR CNS
+  function calculateZScore(value, historicalValues) {
+    // Normalize value to z-score based on historical data
+    // z = (x - μ) / σ
+    
+    if(!historicalValues || historicalValues.length < 7) {
+      // Not enough data for normalization
+      return value / 100; // Return as percentage
+    }
+    
+    const mean = historicalValues.reduce((a,b)=>a+b,0) / historicalValues.length;
+    const variance = historicalValues.reduce((a,b)=>a+Math.pow(b-mean,2),0) / historicalValues.length;
+    const std = Math.sqrt(variance);
+    
+    if(std === 0) return 0; // No variance
+    
+    const zScore = (value - mean) / std;
+    
+    // Clamp z-score between -3 and 3 (99.7% of normal distribution)
+    return Math.max(-3, Math.min(3, zScore));
+  }
+  
+  function normalizeCNSWithBaseline(rawCNS) {
+    // Get historical CNS scores from past 28 days
+    const recentDays = Object.keys(store).sort().slice(-28);
+    const historicalCNS = [];
+    
+    recentDays.forEach(key => {
+      const day = store[key];
+      if(day && day.totalCNS) {
+        historicalCNS.push(fmt(day.totalCNS));
+      }
+    });
+    
+    if(historicalCNS.length < 7) {
+      // Not enough baseline data, return raw CNS
+      return {
+        normalized: rawCNS,
+        zScore: 0,
+        baseline: rawCNS,
+        hasBaseline: false
+      };
+    }
+    
+    const zScore = calculateZScore(rawCNS, historicalCNS);
+    const baseline = historicalCNS.reduce((a,b)=>a+b,0) / historicalCNS.length;
+    
+    // Convert z-score back to 0-100 scale for display
+    // z-score of 0 = baseline (50)
+    // z-score of +2 = high stress (80)
+    // z-score of -2 = low stress (20)
+    const normalized = clamp(50 + (zScore * 15), 0, 100);
+    
+    return {
+      normalized: Math.round(normalized),
+      zScore: zScore.toFixed(2),
+      baseline: Math.round(baseline),
+      hasBaseline: true
+    };
+  }
+  
+  // GOD-MODE: BANISTER TRIMP (Exponential HR-based Internal Load)
+  function calculateBanisterTRIMP(duration, hrAvg, profile) {
+    // Banister TRIMP uses exponential weighting based on HR reserve
+    // More accurate than simple zone weighting
+    
+    if(!hrAvg || !profile.mhr || !profile.rhr) return 0;
+    
+    const hrRest = profile.rhr || 60;
+    const hrMax = profile.mhr || 190;
+    
+    // HR Reserve ratio
+    const HRr = (hrAvg - hrRest) / (hrMax - hrRest);
+    
+    // Clamp HRr between 0 and 1
+    const HRr_clamped = Math.max(0, Math.min(1, HRr));
+    
+    // Banister exponential coefficient
+    // Male: e^(1.92 × HRr)
+    // Female: e^(1.67 × HRr)
+    const gender = profile.sex || 'Male';
+    const coefficient = gender === 'Female' ? 1.67 : 1.92;
+    
+    // TRIMP = duration × HRr × e^(coefficient × HRr)
+    const trimp = duration * HRr_clamped * Math.exp(coefficient * HRr_clamped);
+    
+    return Math.round(trimp);
+  }
+  
+  // GOD-MODE: EWMA (Exponentially Weighted Moving Average) ACWR
+  function calculateEWMA(data, lambda) {
+    // lambda: smoothing factor (higher = more weight on recent data)
+    // For 7-day acute: lambda ≈ 0.2857 (2/(7+1))
+    // For 28-day chronic: lambda ≈ 0.0690 (2/(28+1))
+    if(!data || data.length === 0) return 0;
+    
+    let ewma = data[0];
+    for(let i = 1; i < data.length; i++) {
+      ewma = lambda * data[i] + (1 - lambda) * ewma;
+    }
+    return ewma;
+  }
+  
+  function calculateEWMAACWR(hist) {
+    if(hist.length < 14) return { ac: '—', warn: false, acute: 0, chronic: 0 };
+    
+    // Get TSS values from history
+    const tssData = hist.map(h => fmt(h.tss));
+    
+    // Calculate EWMA for last 7 days (Acute)
+    const last7 = tssData.slice(-7);
+    const acute = calculateEWMA(last7, 2 / (7 + 1));
+    
+    // Calculate EWMA for last 28 days (Chronic)
+    const last28 = tssData.slice(-28);
+    const chronic = calculateEWMA(last28, 2 / (28 + 1));
+    
+    // Calculate ACWR with epsilon to prevent division by zero
+    const epsilon = 0.1;
+    const ac = chronic > epsilon ? (acute / (chronic + epsilon)).toFixed(2) : '—';
+    const warn = parseFloat(ac) > 1.30;
+    
+    return { ac, warn, acute: Math.round(acute), chronic: Math.round(chronic) };
+  }
+  
   // UFC PI PRESCRIPTION ENGINE
   function generateTrainingPrescription(acwr, avgCNS, tendonLoad, z5Minutes) {
     let prescription = '';
@@ -1876,12 +2639,41 @@
     const avgCNS=days?Math.round(totalCNS/days):0; const avgTSS=days?Math.round(totalTSS/days):0;
     const mean=avgCNS; const varc=dailyCNS.length? dailyCNS.reduce((s,v)=>s+Math.pow(v-mean,2),0)/dailyCNS.length : 0;
     const std=Math.sqrt(varc); const mono=std>0?(mean/std).toFixed(2):'0.00';
-    const last28=hist.slice(-28); let ac='—', warn=false;
-    if(last28.length>=14){const chronic=last28.reduce((a,b)=>a+fmt(b.tss),0)/last28.length; if(chronic>0){ac=(avgTSS*7/chronic).toFixed(2); warn=parseFloat(ac)>1.30}}
+    
+    // GOD-MODE: Foster Strain = Weekly Load × Monotony
+    const strain = Math.round(totalTSS * parseFloat(mono));
+    
+    // GOD-MODE: Use EWMA ACWR instead of simple average
+    const acwrData = calculateEWMAACWR(hist);
+    const ac = acwrData.ac;
+    const warn = acwrData.warn;
+    const acuteLoad = acwrData.acute;
+    const chronicLoad = acwrData.chronic;
     
     // Get user's sport focus
     const profile = LS.get('elite_profile', {});
     const sportFocus = profile.sport || '';
+    
+    // GOD-MODE: Check for high strain injury risk
+    // Calculate strain quartile (top 25% is high risk)
+    const recentStrains = hist.slice(-12).map(h => {
+      const dayTSS = fmt(h.tss);
+      // Need to recalculate monotony for historical data (simplified)
+      return dayTSS * 1.5; // Approximate strain
+    });
+    const strainThreshold = recentStrains.length > 0 
+      ? recentStrains.sort((a,b)=>b-a)[Math.floor(recentStrains.length * 0.25)] 
+      : 1000;
+    const highStrain = strain > strainThreshold && parseFloat(mono) > 2.0;
+    
+    // GOD-MODE: Analyze sleep patterns
+    const sleepAnalysis = analyzeSleepPattern();
+    
+    // GOD-MODE: Analyze RSI decline
+    const rsiAnalysis = analyzeRSIDecline();
+    
+    // GOD-MODE: Analyze Z5 spike
+    const z5Analysis = analyzeZ5Spike();
     
     // Generate recommendations based on sport focus and modalities done
     let recommendations = generateRecommendations(sportFocus, modalitiesDone);
@@ -1894,9 +2686,25 @@
         <div class="kpi"><div class="muted">Total Volume (lb)</div><div class="v">${totalVOL.toLocaleString()}</div></div>
         <div class="kpi"><div class="muted">Avg daily CNS</div><div class="v">${avgCNS}</div></div>
         <div class="kpi"><div class="muted">Weekly TSS</div><div class="v">${totalTSS}</div></div>
-        <div class="kpi" style="border-left-color:${warn?'#ff6b6b':'#00ffb3'}"><div class="muted">Acute:Chronic</div><div class="v" style="color:${warn?'#ff6b6b':'#00ffb3'}">${ac}</div></div>
+        <div class="kpi" style="border-left-color:${warn?'#ff6b6b':'#00ffb3'}"><div class="muted">Acute:Chronic (EWMA)</div><div class="v" style="color:${warn?'#ff6b6b':'#00ffb3'}">${ac}</div></div>
         <div class="kpi"><div class="muted">Monotony</div><div class="v">${mono}</div></div>
+        <div class="kpi" style="border-left-color:${highStrain?'#ff6b6b':'#9de8c5'}"><div class="muted">Strain (Load×Mono)</div><div class="v" style="color:${highStrain?'#ff6b6b':'#9de8c5'}">${strain}</div></div>
+        <div class="kpi"><div class="muted">Acute Load (7d)</div><div class="v">${acuteLoad}</div></div>
+        <div class="kpi"><div class="muted">Chronic Load (28d)</div><div class="v">${chronicLoad}</div></div>
       </div>
+      ${highStrain ? `<div class="sec" style="margin-top:12px"><div class="bd"><div class="danger"><b>⚠️ High Strain Warning:</b> Monotony > 2.0 AND Strain in top quartile. Risk of overtraining injury. Add training variety or reduce volume 15-20%.</div></div></div>` : ''}
+      ${sleepAnalysis.hasAlert ? `<div class="sec" style="margin-top:12px"><div class="bd"><div class="danger"><b>⚠️ Sleep Pattern Alert:</b> ${sleepAnalysis.maxConsecutive} consecutive nights with <6h sleep detected. Elevated injury and overtraining risk. Prioritize 7-9h sleep for next 3 nights.</div></div></div>` : ''}
+      ${rsiAnalysis.decline ? `<div class="sec" style="margin-top:12px"><div class="bd"><div class="danger"><b>⚠️ RSI Decline Alert:</b> Reactive Strength Index dropped ${rsiAnalysis.declinePercent}% vs 21-day average (${rsiAnalysis.avgRSI}). Current: ${rsiAnalysis.currentRSI}. Indicates neuromuscular fatigue or poor recovery. Consider deload or reduce plyometric volume.</div></div></div>` : ''}
+      ${z5Analysis.spike ? `<div class="sec" style="margin-top:12px"><div class="bd"><div class="danger"><b>⚠️ Z5 Intensity Spike:</b> Zone 5 minutes increased ${z5Analysis.increasePercent}% week-over-week (${z5Analysis.lastWeekZ5}min → ${z5Analysis.thisWeekZ5}min). Sudden spikes >50% elevate injury risk. Scale back high-intensity work or add recovery days.</div></div></div>` : ''}
+      ${rsiAnalysis.hasData && !rsiAnalysis.decline ? `<div style="margin-top:8px;padding:8px;background:#0d1714;border:1px solid #00ffb3;border-radius:4px">
+        <b>RSI (Reactive Strength):</b> Current ${rsiAnalysis.currentRSI} | 21-day avg ${rsiAnalysis.avgRSI} <span style="color:#00ffb3">(Stable)</span>
+      </div>` : ''}
+      ${z5Analysis.hasData && !z5Analysis.spike ? `<div style="margin-top:8px;padding:8px;background:#0d1714;border:1px solid #1e6a4f;border-radius:4px">
+        <b>Z5 Intensity Trend:</b> This week ${z5Analysis.thisWeekZ5}min | Last week ${z5Analysis.lastWeekZ5}min ${z5Analysis.increasePercent > 0 ? `(+${z5Analysis.increasePercent}%)` : `(${z5Analysis.increasePercent}%)`}
+      </div>` : ''}
+      ${sleepAnalysis.avgSleep > 0 ? `<div style="margin-top:8px;padding:8px;background:#0d1714;border:1px solid #1e6a4f;border-radius:4px">
+        <b>7-Day Sleep Average:</b> ${sleepAnalysis.avgSleep}h/night ${sleepAnalysis.avgSleep < 7 ? '<span style="color:#ffbb33">(Below optimal)</span>' : '<span style="color:#00ffb3">(Good)</span>'}
+      </div>` : ''}
       ${weeklyTendonLoad > 0 ? `<div style="margin-top:12px;padding:8px;background:#0d1714;border:1px solid #1e6a4f;border-radius:4px">
         <b>Weekly Tendon Load:</b> ${weeklyTendonLoad} contacts ${weeklyTendonLoad > 350 ? '<span style="color:#ffbb33">(Elevated)</span>' : '<span style="color:#00ffb3">(Safe)</span>'}
       </div>` : ''}
